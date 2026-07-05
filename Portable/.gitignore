@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# PyInstaller
+build/
+dist/
+*.manifest
+
+# Project outputs
+outputs/
+*.png.stego
+scratch/
+
+# OS
+.DS_Store

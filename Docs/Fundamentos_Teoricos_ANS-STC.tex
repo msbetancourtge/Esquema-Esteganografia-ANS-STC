@@ -1,0 +1,569 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+
+\geometry{margin=2.5cm}
+
+\title{Esquema de Esteganografía y Marca de Agua Robusta\\ Basado en ANS y STC\\[4pt]
+\large Fundamentos Matemáticos y Teóricos del Sistema Implementado}
+\author{
+Michael S. Betancourt Gelves \\
+Nicolás A. Castellanos Rico \\[6pt]
+\small Profesor: Oswaldo Rojas Camacho \\
+\small Teoría de la Información --- Universidad Nacional de Colombia, 2026
+}
+\date{}
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+Este documento formaliza los fundamentos matemáticos del sistema construido para
+la protección y persistencia de marcas de agua invisibles. El sistema integra
+\emph{dos modos complementarios}: (i)~una esteganografía de \emph{alta capacidad}
+que combina compresión entrópica por Sistemas Numéricos Asimétricos (ANS),
+funciones de costo adaptativas (J-UNIWARD) y Códigos de Síndrome-Trellis (STC)
+sobre la Transformada Discreta del Coseno; y (ii)~una \emph{marca de agua robusta}
+resistente al reescalado y la recompresión de las redes sociales, basada en
+Espectro Ensanchado Mejorado (ISS) sobre una malla canónica, protección
+Reed-Solomon, compresión entrópica del texto y una amplitud adaptativa por carga
+útil. Para cada concepto matemático empleado se enuncia su formulación y se cita
+su fuente bibliográfica original. El resultado logrado es una marca que sobrevive
+la cadena completa de Facebook, WhatsApp y Pinterest (reescalado + recompresión
+JPEG/WebP) conservando la imperceptibilidad.
+\end{abstract}
+
+\section*{1. Introducción: el desafío de la veracidad}
+
+La irrupción de la Inteligencia Artificial generativa ha inundado la red de
+\emph{deepfakes}. En este contexto ya no basta con \emph{ver para creer}: se
+requieren mecanismos matemáticos para verificar la \emph{autenticidad} y la
+\emph{integridad} de una imagen. Una marca de agua invisible de procedencia
+(\emph{provenance}) permite incrustar una firma verificable dentro del propio
+medio; el reto es que esa firma \emph{persista} cuando la imagen atraviesa canales
+con pérdida.
+
+El problema central es, por tanto, de \emph{Teoría de la Información}: transmitir
+un mensaje oculto por un canal ruidoso (la compresión y el reescalado de las
+plataformas) de forma imperceptible y recuperable. Este trabajo aborda ese
+problema con herramientas clásicas de codificación de fuente, codificación de
+canal, procesamiento de señales y modelado perceptual.
+
+\section*{2. El problema: fragilidad ante canales con pérdida}
+
+La esteganografía tradicional oculta bits en el dominio espacial o en bloques
+$8\times 8$ de la Transformada Discreta del Coseno (DCT). Al subir una imagen a
+una red social, algoritmos como JPEG la \emph{recomprimen} y, sobre todo, la
+\emph{reescalan}: ambas operaciones desincronizan la retícula de $8\times 8$ y
+destruyen los bits ocultos, produciendo un fallo de sincronización en la
+extracción. El mensaje desaparece ante la más mínima edición.
+
+Formalmente, si $x$ es el medio portador y $C(\cdot)$ el operador de canal
+(reescalado seguido de recompresión), se necesita un esquema de codificación
+$E$ y decodificación $D$ tales que
+\[
+D\big(C(E(x,m))\big) = m
+\]
+con alta probabilidad, manteniendo una distorsión perceptual pequeña entre $x$ y
+$E(x,m)$. Las dos secciones finales (Modos A y B) presentan dos soluciones a este
+problema con distintos compromisos capacidad/robustez.
+
+\section*{3. Fundamentos de Teoría de la Información}
+
+\subsection*{3.1 Entropía de Shannon y codificación de fuente}
+
+La entropía de una fuente discreta $X$ con distribución $p(x)$ es
+\begin{equation}
+H(X) = -\sum_{x} p(x)\,\log_2 p(x),
+\end{equation}
+y cuantifica el número medio de bits por símbolo necesarios para representar la
+fuente sin pérdida. El \emph{teorema de codificación de fuente} de Shannon
+\cite{shannon1948} establece que ninguna codificación libre de pérdida puede usar
+menos de $H(X)$ bits/símbolo en promedio, y que este límite es alcanzable
+asintóticamente. Comprimir el mensaje \emph{antes} de incrustarlo reduce el número
+de bits a ocultar; como se verá, menos bits implican menos modificaciones del
+portador (menor distorsión) y mayor margen frente al canal.
+
+\subsection*{3.2 Codificación entrópica: Huffman, Lempel-Ziv y ANS}
+
+Para acercarse al límite $H(X)$ el sistema emplea codificación entrópica. Tres
+resultados matemáticos la sustentan:
+
+\begin{itemize}
+\item \textbf{Códigos de Huffman} \cite{huffman1952}: construyen un código prefijo
+de \emph{redundancia mínima} para una distribución conocida, óptimo entre los
+códigos de longitud entera.
+\item \textbf{Codificación por diccionario Lempel-Ziv (LZ77)} \cite{zivlempel1977}:
+sustituye subcadenas repetidas por referencias $(\text{distancia},\text{longitud})$,
+capturando la redundancia \emph{contextual} del lenguaje natural sin conocer la
+distribución de antemano.
+\item \textbf{Sistemas Numéricos Asimétricos (ANS)} \cite{duda2014}: representan el
+mensaje como un único número natural cuyo estado $x$ evoluciona, para un símbolo
+$s$ de frecuencia $f_s$ y frecuencia acumulada $c_s$ sobre un total
+$M=2^{b}$, según
+\begin{equation}
+x' \;=\; \Big\lfloor \tfrac{x}{f_s} \Big\rfloor\, M \;+\; \big(x \bmod f_s\big) \;+\; c_s .
+\end{equation}
+ANS combina la \emph{velocidad} de Huffman con la \emph{eficiencia} de la
+codificación aritmética \cite{rissanen1979}, situándose muy cerca del límite de
+entropía.
+\end{itemize}
+
+En el Modo~A el \emph{payload} se comprime con un codificador rANS estático de
+byte (renormalización de $8$ bits, total $M=2^{12}$). En el Modo~B el texto se
+comprime con un esquema que combina diccionario LZ y codificación de Huffman con
+modelado de contexto; sobre prosa natural corta este esquema supera a la
+codificación por diccionario simple gracias a un diccionario incorporado de
+términos frecuentes. En ambos casos el principio es el mismo: \emph{minimizar la
+entropía representada} para reducir la carga a insertar.
+
+\section*{4. Fundamentos de transformación y percepción}
+
+\subsection*{4.1 Transformada Discreta del Coseno (DCT)}
+
+Ambos modos operan en el dominio de la DCT. La DCT-II bidimensional ortonormal de
+un bloque $f(x,y)$ de tamaño $N\times N$ es
+\begin{equation}
+F(u,v) = \alpha(u)\,\alpha(v)\sum_{x=0}^{N-1}\sum_{y=0}^{N-1} f(x,y)
+\cos\!\Big[\tfrac{\pi(2x+1)u}{2N}\Big]
+\cos\!\Big[\tfrac{\pi(2y+1)v}{2N}\Big],
+\end{equation}
+con $\alpha(0)=\sqrt{1/N}$ y $\alpha(k)=\sqrt{2/N}$ para $k>0$, lo que hace la
+transformada ortonormal (energía preservada, teorema de Parseval). La DCT fue
+introducida por Ahmed, Natarajan y Rao \cite{ahmed1974} y concentra la energía de
+señales naturales en pocos coeficientes de baja frecuencia, propiedad que se
+explota para insertar información donde es a la vez robusta e imperceptible. El
+Modo~A usa bloques $8\times 8$ alineados con JPEG; el Modo~B usa una única DCT
+global sobre la malla canónica.
+
+\subsection*{4.2 Enmascaramiento perceptual del sistema visual humano}
+
+El sistema visual humano (HVS) tolera más ruido en regiones de alta textura que en
+zonas lisas o bordes definidos: es el fenómeno de \emph{enmascaramiento por
+contraste}. Los modelos perceptuales sobre la DCT \cite{watson1993} formalizan
+umbrales de visibilidad dependientes del contenido local. El sistema aprovecha
+esto de dos maneras: (i)~en el Modo~A, la función de costo dirige las
+modificaciones hacia texturas complejas; (ii)~en el Modo~B, una máscara perceptual
+basada en la actividad local modula la amplitud de la marca (Sección~6.3).
+
+\section*{5. Fundamentos de codificación de canal}
+
+\subsection*{5.1 Códigos Reed-Solomon}
+
+Para reparar los errores que el canal introduce pese a todo, el sistema envuelve
+la carga con un código Reed-Solomon \cite{reedsolomon1960}. Un código
+$\text{RS}(n,k)$ sobre el cuerpo finito $\mathrm{GF}(2^8)$ interpreta $k$ bytes de
+datos como coeficientes de un polinomio y lo evalúa en $n=255$ puntos, añadiendo
+$n-k$ bytes de paridad. Por la \emph{cota de distancia mínima} (distancia
+$d=n-k+1$, códigos MDS \cite{macwilliams1977}) corrige hasta
+\begin{equation}
+t = \Big\lfloor \tfrac{n-k}{2} \Big\rfloor
+\end{equation}
+bytes erróneos por bloque. Esto es idóneo para \emph{ráfagas} de error: un byte
+dañado cuenta como un solo símbolo con independencia de cuántos de sus bits fallen.
+El Modo~A usa $n-k=120$ (corrige $60$ bytes por bloque); el Modo~B usa $n-k=32$
+(corrige $16$).
+
+\subsection*{5.2 Verificación por redundancia cíclica (CRC)}
+
+La cabecera de cada contenedor incorpora una comprobación de redundancia cíclica
+CRC-16 \cite{peterson1961}. El mensaje se interpreta como polinomio sobre
+$\mathrm{GF}(2)$ y se toma el residuo módulo el polinomio generador
+$g(x)=x^{16}+x^{12}+x^{5}+1$ (estándar CCITT). El CRC no corrige, pero
+\emph{detecta} con altísima probabilidad cualquier corrupción de la cabecera; su
+papel es evitar \emph{falsos positivos}: una imagen sin marca (o demasiado
+degradada) falla el CRC y se reporta como ``sin marca'' en lugar de devolver
+basura.
+
+\section*{6. Modo A: esteganografía de alta capacidad (ANS + STC)}
+
+Este modo persigue \emph{capacidad}: ocultar kilobytes resistiendo la
+recompresión JPEG. Su tubería es
+\[
+\text{payload}\ \xrightarrow{\text{ANS}}\ \text{comprimido}\
+\xrightarrow{\text{Reed-Solomon}}\ \text{protegido}\
+\xrightarrow{\text{STC}}\ \text{coef. DCT}\ \rightarrow\ \text{imagen}.
+\]
+
+\subsection*{6.1 Inserción de paridad cuantizada en la DCT}
+
+Sobre cada bloque $8\times 8$ se seleccionan coeficientes de \emph{media
+frecuencia} (se excluyen la componente continua, muy visible, y las altas
+frecuencias, que JPEG destruye primero). Un bit se incrusta en la \emph{paridad}
+del coeficiente cuantizado
+\begin{equation}
+b = \Big\lfloor \tfrac{F(u,v)}{\Delta} \Big\rceil \bmod 2,
+\end{equation}
+donde $\Delta$ es un paso de cuantización elegido de modo que \emph{supere} el paso
+propio de JPEG en esas frecuencias; así la paridad sobrevive a la recompresión.
+
+\subsection*{6.2 Función de costo J-UNIWARD}
+
+¿Qué coeficientes conviene modificar? Los de menor impacto perceptual y
+estadístico. J-UNIWARD \cite{holub2014uniward} define el costo de alterar el modo
+$(i,j)$ del bloque $b$ como
+\begin{equation}
+\rho(b,i,j) = \sum_{k=1}^{3}\sum_{u,v}
+\frac{\big|\,\Delta R^{(k)}_{u,v}\,\big|}{\sigma + \big|\,R^{(k)}_{u,v}\,\big|},
+\end{equation}
+donde $R^{(k)}$ son los tres residuos direccionales de una descomposición
+\emph{wavelet} no decimada de Daubechies-8 \cite{daubechies1992} de la imagen, y
+$\Delta R^{(k)}$ es su variación ante una modificación unidad del coeficiente. La
+constante $\sigma=2^{-6}$ estabiliza el cociente. En regiones lisas
+$|R^{(k)}|\!\approx\!0$ y el costo se dispara (se evitan); en texturas el costo es
+pequeño (se prefieren). Así el enmascaramiento perceptual se convierte en una
+función objetivo cuantitativa.
+
+\subsection*{6.3 Códigos de Síndrome-Trellis y algoritmo de Viterbi}
+
+Dado el vector de portadores $\vect{x}$ (paridades de los coeficientes), su vector
+de costos $\boldsymbol{\rho}$ y el mensaje $\vect{m}$, los Códigos de
+Síndrome-Trellis (STC) \cite{filler2011} buscan el estego $\vect{y}$ que resuelve
+\begin{equation}
+\vect{y} = \arg\min_{\,\vect{z}\,:\;\vect H\vect{z}=\vect{m}\ (\mathrm{mod}\ 2)}\;
+D(\vect{x},\vect{z}), \qquad
+D(\vect{x},\vect{z}) = \sum_i \rho_i\,[\,x_i \ne z_i\,].
+\end{equation}
+La matriz de paridad $\vect H$ se forma repitiendo en diagonal una submatriz
+compartida $\hat{\vect H}$ de altura $h$ (aquí $h=8$, con $2^h$ estados de
+trellis). La minimización es un problema de \emph{camino de mínimo costo} en la
+malla del síndrome, resuelto de forma óptima por el algoritmo de Viterbi
+\cite{viterbi1967}. La extracción es el mapa lineal barato
+$\vect{m}=\vect H\vect{y}\ (\mathrm{mod}\ 2)$.
+
+Una consecuencia clave es la \emph{avalancha}: un solo coeficiente alterado por el
+canal puede voltear hasta $h$ bits del mensaje. Precisamente por ello el envoltorio
+Reed-Solomon (Sección~5.1) es indispensable: convierte esas ráfagas en errores de
+byte reparables.
+
+\section*{7. Modo B: marca de agua robusta (lo logrado)}
+
+El Modo~A muere ante el \emph{reescalado}. El Modo~B --- el núcleo de lo logrado
+--- sacrifica capacidad por robustez bruta: incrusta un texto de hasta $512$~bytes
+\emph{comprimidos} y sobrevive la cadena completa de reescalado y recompresión de
+las redes sociales. Sus componentes matemáticos son los siguientes.
+
+\subsection*{7.1 Resincronización a resolución canónica}
+
+Sea $Y$ la luminancia del portador. Tanto el insertor como el extractor la llevan
+primero a una malla fija $S\times S$ (con $S=1152$) mediante remuestreo:
+\[
+Y_c = \mathcal{R}_{S\times S}(Y).
+\]
+Cualquiera que sea el tamaño arbitrario al que una plataforma reescale la imagen,
+el extractor la ``devuelve'' a la misma malla canónica antes de decodificar. Con
+ello la retícula de incrustación \emph{nunca se pierde}: se resuelve la
+desincronización que mata a la esteganografía por bloques. La marca se calcula en
+la DCT de $Y_c$ y solo la \emph{perturbación} se remuestrea de vuelta al tamaño
+nativo, preservando el aspecto original.
+
+\subsection*{7.2 Espectro ensanchado mejorado (ISS)}
+
+La información se incrusta por Espectro Ensanchado. En el esquema aditivo clásico
+\cite{cox1997} cada bit se reparte sobre muchos coeficientes con un patrón
+pseudoaleatorio de signos, pero la propia imagen actúa como ruido (interferencia
+del portador). El \emph{Espectro Ensanchado Mejorado} (ISS) de Malvar y Florêncio
+\cite{malvar2003} cancela algebraicamente esa interferencia.
+
+Sea $G_i$ el grupo de $L=|G_i|$ coeficientes asignados al bit $b_i$, con signos
+$s_c\in\{-1,+1\}$ y amplitud $\alpha$. Definimos el objetivo
+$\tau_i=\alpha(2b_i-1)$ y la proyección previa
+\begin{equation}
+p_i = \frac{1}{\sqrt{L}}\sum_{c\in G_i} s_c\,D(c).
+\end{equation}
+La regla de inserción actualiza cada coeficiente como
+\begin{equation}
+D'(c) = D(c) + \frac{\tau_i - p_i}{\sqrt{L}}\,s_c .
+\end{equation}
+Como $s_c^2=1$, la proyección \emph{posterior} resulta exactamente
+\begin{equation}
+p'_i = \frac{1}{\sqrt L}\sum_{c\in G_i} s_c D'(c)
+     = p_i + \frac{\tau_i-p_i}{L}\sum_{c\in G_i} s_c^2 = \tau_i,
+\end{equation}
+es decir, la correlación se fija en $\pm\alpha$ \emph{eliminando} el término del
+portador $p_i$. La detección es ciega y por \emph{signo}:
+\begin{equation}
+\hat{b}_i = \mathbb{1}\!\left[\ \sum_{c\in G_i} s_c\,\tilde D(c) \ > \ 0\ \right],
+\end{equation}
+donde $\tilde D$ es el espectro recibido tras el canal. Al no depender de la
+amplitud, el extractor \emph{no necesita conocer} $\alpha$, y la ganancia de
+procesamiento propia del espectro ensanchado hace la decisión muy robusta al
+ruido de compresión.
+
+\subsection*{7.3 Enmascaramiento perceptual adaptativo}
+
+La perturbación espacial $\delta(x,y)$ (anti-transformada de la marca) se multiplica
+por una máscara de actividad local para concentrarla en texturas y retirarla de
+zonas lisas. Con media y varianza locales en ventana $w\times w$,
+\begin{equation}
+a(x,y) = \sqrt{\operatorname{Var}_w[Y_c](x,y)}, \qquad
+\mathrm{mask}(x,y) = \operatorname{clip}\!\Big(\frac{a(x,y)}{\overline{a}},\ \ell,\ u\Big),
+\end{equation}
+con recorte a $[\ell,u]=[0{.}72,\,3{.}0]$. Este modelo de enmascaramiento por
+contraste \cite{watson1993} preserva la imperceptibilidad; el suelo $\ell>0$
+garantiza que las regiones lisas (cielo, piel, documentos) conserven marca
+suficiente para sobrevivir descargas pequeñas.
+
+\subsection*{7.4 Fuerza adaptativa por carga útil}
+
+La fiabilidad de la detección por correlación crece con la \emph{ganancia de
+procesamiento}: a distorsión perceptual fija, la razón señal-ruido del estadístico
+de decisión aumenta aproximadamente como $\sqrt{L}$, siendo $L$ el número de
+coeficientes por bit \cite{cox1997,malvar2003}. Un mensaje largo dispone de menos
+coeficientes por bit ($L$ pequeño) y pierde margen. Para compensarlo, la amplitud
+se escala en función de $L$:
+\begin{equation}
+\alpha_{\text{payload}} = \alpha \cdot \min\!\Big(\beta_{\max},\ \sqrt{\tfrac{C_{\text{ref}}}{L}}\Big),
+\qquad L = \frac{N-N_{\text{cab}}}{n_{\text{bits}}},
+\end{equation}
+con $C_{\text{ref}}=400$ y tope $\beta_{\max}=1{.}60$. Así los mensajes cortos se
+insertan con baja amplitud (alta calidad, PSNR alto) mientras que los largos suben
+su amplitud $\propto 1/\sqrt{L}$ para mantener el mismo margen de canal. Como la
+detección es por signo, este ajuste es \emph{transparente} para el extractor.
+
+\subsection*{7.5 Cota de resolución de trabajo y el teorema de muestreo}
+
+La marca ocupa frecuencias espaciales hasta $f_{\text{hi}}$ ciclos por ancho de
+imagen. Por el \emph{teorema de muestreo de Nyquist-Shannon}
+\cite{nyquist1928,shannon1949}, un reescalado posterior a $W$ píxeles solo preserva
+frecuencias por debajo de la frecuencia de Nyquist $W/2$: todo componente por
+encima es aniquilado por el filtro anti-aliasing. Insertar sobre un original muy
+grande obliga a la marca a atravesar un remuestreo de gran factor
+(canónico~$\to$~nativo al insertar, y nativo~$\to$~plataforma al descargar); la
+composición de dos núcleos de interpolación imperfectos atenúa la banda media y
+hace fallar la recuperación de forma \emph{dependiente de la razón de remuestreo}.
+
+La solución adoptada acota el tamaño de trabajo: todo original cuyo lado mayor
+exceda $S_{\max}=2048$ se reduce a $S_{\max}$ antes de insertar. Esto (i)~acota la
+razón de remuestreo canónico-nativo-descarga, y (ii)~coincide con el propio límite
+que las plataformas aplican a las imágenes. Es una aplicación directa del teorema
+de muestreo y constituyó la corrección clave para el fallo observado en imágenes
+de alta resolución.
+
+\subsection*{7.6 Contenedor: compresión, Reed-Solomon y cabecera}
+
+La carga final es
+\[
+\text{texto}\ \xrightarrow{\text{cod. entrópica}}\ \text{comprimido}\
+\xrightarrow{\text{Reed-Solomon}}\ \text{región de payload},
+\]
+precedida de una cabecera ultra-redundante de $64$~bits
+$\;\texttt{MAGIC}\,|\,\texttt{LEN}\,|\,\texttt{NSYM}\,|\,\texttt{CRC-16}\,|\,\texttt{FLAGS}$.
+La cabecera se decodifica primero y anuncia cuántos bits de payload leer; los
+mensajes cortos usan menos bits (mayor calidad y margen). El bit de compresión
+viaja en \texttt{FLAGS}; como la comprobación CRC cubre solo
+$\texttt{MAGIC}|\texttt{LEN}|\texttt{NSYM}$, las marcas de versiones previas
+(cuyo octavo byte era relleno nulo) se interpretan como no comprimidas y siguen
+verificándose (compatibilidad hacia atrás). La compresión se aplica solo si
+reduce el tamaño; cadenas cortas o incompresibles se almacenan en crudo. En la
+decodificación se acota el tamaño expandido para prevenir un \emph{ataque de
+descompresión} (bomba).
+
+\section*{8. Métricas de validación}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}p{3.2cm}p{2.4cm}p{7.6cm}@{}}
+\toprule
+\textbf{Métrica} & \textbf{Dominio} & \textbf{Objetivo} \\
+\midrule
+PSNR & Visual & Garantizar imperceptibilidad. \\
+SSIM & Estructural & Preservar la composición de la imagen. \\
+BER & Integridad & Minimizar errores tras el canal. \\
+Divergencia KL & Estadístico & Resistir el esteganálisis moderno. \\
+\bottomrule
+\end{tabular}
+\caption{Métricas y su propósito en el proyecto.}
+\end{table}
+
+\noindent\textbf{PSNR.} La relación señal-ruido de pico, sobre valores en
+$[0,255]$, es
+\begin{equation}
+\mathrm{PSNR} = 10\,\log_{10}\!\frac{255^2}{\mathrm{MSE}}, \qquad
+\mathrm{MSE}=\frac{1}{MN}\sum_{x,y}\big(I(x,y)-\hat I(x,y)\big)^2 .
+\end{equation}
+
+\noindent\textbf{SSIM.} El índice de similitud estructural \cite{wang2004ssim}
+compara luminancia, contraste y estructura en ventanas locales,
+\begin{equation}
+\mathrm{SSIM}(a,b)=\frac{(2\mu_a\mu_b+c_1)(2\sigma_{ab}+c_2)}
+{(\mu_a^2+\mu_b^2+c_1)(\sigma_a^2+\sigma_b^2+c_2)},
+\end{equation}
+más acorde con la percepción humana que el error cuadrático.
+
+\noindent\textbf{BER.} La tasa de error de bit es la fracción de bits del mensaje
+mal recuperados; en el sistema debe caer bajo la capacidad correctora del código
+Reed-Solomon para que la reconstrucción sea exacta.
+
+\noindent\textbf{Divergencia de Kullback-Leibler.} La seguridad esteganográfica se
+mide por la divergencia entre la distribución del portador $P$ y la del estego $Q$
+\cite{kullback1951}:
+\begin{equation}
+D_{\mathrm{KL}}(P\Vert Q) = \sum_{x} P(x)\,\log\frac{P(x)}{Q(x)} .
+\end{equation}
+Cachin \cite{cachin1998} formaliza la $\varepsilon$-seguridad de un esquema como
+$D_{\mathrm{KL}}(P\Vert Q)\le\varepsilon$; minimizar el número de cambios (el
+objetivo explícito de STC) reduce esta divergencia y, con ella, la detectabilidad
+frente a esteganálisis por modelos ricos y clasificadores de conjunto
+\cite{fridrich2012srm,kodovsky2012ensemble}.
+
+\section*{9. Resultados obtenidos}
+
+La marca de agua robusta implementada:
+\begin{itemize}
+\item \textbf{Sobrevive la cadena social completa} (reescalado por lado mayor +
+recompresión JPEG/WebP con submuestreo de croma) hasta descargas de $480$~px, para
+textos cortos y para párrafos, sobre portadores texturados y suaves.
+\item \textbf{Corrige el fallo de alta resolución} mediante la cota de resolución
+de trabajo (Sección~7.5): originales de $3000$--$6000$~px, acotados a $2048$~px,
+recuperan la marca en todo el rango de descargas.
+\item \textbf{Reduce la entropía del mensaje} en torno al $45$--$48\%$ sobre prosa
+natural (p.\,ej.\ un párrafo de $\sim$250 caracteres baja a $\sim$130~bytes),
+elevando el margen de canal y la calidad de imagen.
+\item \textbf{Preserva la imperceptibilidad}, con PSNR de $\sim$38~dB para mensajes
+cortos y $\sim$31~dB para cargas cercanas al máximo, y decae con gracia (reporta
+``sin marca'' en lugar de basura) cuando no hay marca válida.
+\end{itemize}
+Estos resultados confirman la premisa central: \emph{minimizar el número de
+cambios en el portador} --- vía compresión entrópica, costo adaptativo y
+codificación de mínima distorsión --- maximiza a la vez la robustez y la
+imperceptibilidad.
+
+\section*{10. Conclusiones}
+
+Se construyó un sistema que resuelve el problema de \emph{persistencia de marcas de
+agua invisibles} bajo canales con pérdida combinando, de forma coherente,
+resultados clásicos de teoría de la información (entropía de Shannon, codificación
+de Huffman/LZ/ANS), procesamiento de señales (DCT, espectro ensanchado mejorado,
+teorema de muestreo), codificación de canal (Reed-Solomon, CRC) y optimización de
+mínima distorsión (funciones de costo UNIWARD, códigos Síndrome-Trellis con
+Viterbi). El Modo~B, basado en ISS sobre una malla canónica con amplitud adaptativa
+y cota de resolución, logra el objetivo práctico de sobrevivir a Facebook, WhatsApp
+y Pinterest sin sacrificar la invisibilidad, aportando una base matemática sólida
+para una marca de procedencia anti-\emph{deepfake}.
+
+\begin{thebibliography}{99}
+
+\bibitem{shannon1948}
+C.~E. Shannon, ``A Mathematical Theory of Communication,''
+\emph{Bell System Technical Journal}, vol.~27, pp.~379--423 y 623--656, 1948.
+
+\bibitem{huffman1952}
+D.~A. Huffman, ``A Method for the Construction of Minimum-Redundancy Codes,''
+\emph{Proceedings of the IRE}, vol.~40, no.~9, pp.~1098--1101, 1952.
+
+\bibitem{zivlempel1977}
+J.~Ziv y A.~Lempel, ``A Universal Algorithm for Sequential Data Compression,''
+\emph{IEEE Transactions on Information Theory}, vol.~23, no.~3, pp.~337--343, 1977.
+
+\bibitem{rissanen1979}
+J.~Rissanen y G.~G. Langdon, ``Arithmetic Coding,''
+\emph{IBM Journal of Research and Development}, vol.~23, no.~2, pp.~149--162, 1979.
+
+\bibitem{duda2014}
+J.~Duda, ``Asymmetric numeral systems: entropy coding combining speed of Huffman
+with compression rate of arithmetic coding,''
+\emph{arXiv:1311.2540}, 2014.
+
+\bibitem{ahmed1974}
+N.~Ahmed, T.~Natarajan y K.~R. Rao, ``Discrete Cosine Transform,''
+\emph{IEEE Transactions on Computers}, vol.~C-23, no.~1, pp.~90--93, 1974.
+
+\bibitem{daubechies1992}
+I.~Daubechies, \emph{Ten Lectures on Wavelets}. Philadelphia: SIAM, 1992.
+
+\bibitem{watson1993}
+A.~B. Watson, ``DCT quantization matrices visually optimized for individual
+images,'' en \emph{Proc.\ SPIE Human Vision, Visual Processing, and Digital
+Display IV}, vol.~1913, pp.~202--216, 1993.
+
+\bibitem{reedsolomon1960}
+I.~S. Reed y G.~Solomon, ``Polynomial Codes over Certain Finite Fields,''
+\emph{Journal of the Society for Industrial and Applied Mathematics}, vol.~8,
+no.~2, pp.~300--304, 1960.
+
+\bibitem{macwilliams1977}
+F.~J. MacWilliams y N.~J.~A. Sloane, \emph{The Theory of Error-Correcting Codes}.
+Amsterdam: North-Holland, 1977.
+
+\bibitem{peterson1961}
+W.~W. Peterson y D.~T. Brown, ``Cyclic Codes for Error Detection,''
+\emph{Proceedings of the IRE}, vol.~49, no.~1, pp.~228--235, 1961.
+
+\bibitem{cox1997}
+I.~J. Cox, J.~Kilian, F.~T. Leighton y T.~Shamoon, ``Secure Spread Spectrum
+Watermarking for Multimedia,'' \emph{IEEE Transactions on Image Processing},
+vol.~6, no.~12, pp.~1673--1687, 1997.
+
+\bibitem{malvar2003}
+H.~S. Malvar y D.~A.~F. Florêncio, ``Improved Spread Spectrum: A New Modulation
+Technique for Robust Watermarking,'' \emph{IEEE Transactions on Signal
+Processing}, vol.~51, no.~4, pp.~898--905, 2003.
+
+\bibitem{filler2011}
+T.~Filler, J.~Judas y J.~Fridrich, ``Minimizing Additive Distortion in
+Steganography Using Syndrome-Trellis Codes,'' \emph{IEEE Transactions on
+Information Forensics and Security}, vol.~6, no.~3, pp.~920--935, 2011.
+
+\bibitem{viterbi1967}
+A.~J. Viterbi, ``Error Bounds for Convolutional Codes and an Asymptotically
+Optimum Decoding Algorithm,'' \emph{IEEE Transactions on Information Theory},
+vol.~13, no.~2, pp.~260--269, 1967.
+
+\bibitem{li2014hill}
+B.~Li, M.~Wang, J.~Huang y X.~Li, ``A New Cost Function for Spatial Image
+Steganography,'' en \emph{Proc.\ IEEE International Conference on Image Processing
+(ICIP)}, pp.~4206--4210, 2014.
+
+\bibitem{holub2014uniward}
+V.~Holub, J.~Fridrich y T.~Denemark, ``Universal Distortion Function for
+Steganography in an Arbitrary Domain,'' \emph{EURASIP Journal on Information
+Security}, vol.~2014, no.~1, art.~1, 2014.
+
+\bibitem{nyquist1928}
+H.~Nyquist, ``Certain Topics in Telegraph Transmission Theory,''
+\emph{Transactions of the AIEE}, vol.~47, no.~2, pp.~617--644, 1928.
+
+\bibitem{shannon1949}
+C.~E. Shannon, ``Communication in the Presence of Noise,''
+\emph{Proceedings of the IRE}, vol.~37, no.~1, pp.~10--21, 1949.
+
+\bibitem{wang2004ssim}
+Z.~Wang, A.~C. Bovik, H.~R. Sheikh y E.~P. Simoncelli, ``Image Quality Assessment:
+From Error Visibility to Structural Similarity,'' \emph{IEEE Transactions on Image
+Processing}, vol.~13, no.~4, pp.~600--612, 2004.
+
+\bibitem{kullback1951}
+S.~Kullback y R.~A. Leibler, ``On Information and Sufficiency,''
+\emph{The Annals of Mathematical Statistics}, vol.~22, no.~1, pp.~79--86, 1951.
+
+\bibitem{cachin1998}
+C.~Cachin, ``An Information-Theoretic Model for Steganography,'' en
+\emph{Information Hiding}, LNCS 1525, pp.~306--318, 1998.
+
+\bibitem{fridrich2012srm}
+J.~Fridrich y J.~Kodovský, ``Rich Models for Steganalysis of Digital Images,''
+\emph{IEEE Transactions on Information Forensics and Security}, vol.~7, no.~3,
+pp.~868--882, 2012.
+
+\bibitem{kodovsky2012ensemble}
+J.~Kodovský, J.~Fridrich y V.~Holub, ``Ensemble Classifiers for Steganalysis of
+Digital Media,'' \emph{IEEE Transactions on Information Forensics and Security},
+vol.~7, no.~2, pp.~432--444, 2012.
+
+\end{thebibliography}
+
+\end{document}

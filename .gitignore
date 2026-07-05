@@ -1,0 +1,36 @@
+# ─────────────── Operating system ───────────────
+.DS_Store
+Thumbs.db
+
+# ─────────────── Python ───────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─────────────── Virtual environments ───────────────
+.venv/
+venv/
+env/
+
+# ─────────────── PyInstaller build artifacts ───────────────
+build/
+dist/
+*.manifest
+
+# ─────────────── Generated project outputs ───────────────
+outputs/
+scratch/
+
+# ─────────────── LaTeX auxiliary files ───────────────
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.out
+*.bbl
+*.blg
+Docs/*.log
