@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ANS-STC · Esteganografía y Marca de Agua Robusta</title>
+
+  <!-- reveal.js core + dark theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/black.min.css" id="theme">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/monokai.min.css">
+
+  <style>
+    :root {
+      --accent: #2fa572;
+      --accent-bright: #4ade80;
+      --accent-2: #38bdf8;
+      --warn: #f7b955;
+      --bad: #f87171;
+      --ink: #e6edf3;
+      --muted: #94a3b8;
+      --panel: #161b22;
+      --panel-2: #1c2430;
+      --line: #2b3440;
+    }
+
+    .reveal {
+      font-family: "Inter", "Helvetica Neue", system-ui, sans-serif;
+      font-size: 30px;
+      color: var(--ink);
+    }
+    .reveal .slides { text-align: left; }
+    .reveal section { line-height: 1.4; }
+
+    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+      font-family: "Inter", "Helvetica Neue", sans-serif;
+      color: #fff;
+      text-transform: none;
+      letter-spacing: -0.01em;
+      font-weight: 700;
+    }
+    .reveal h1 { font-size: 1.9em; line-height: 1.1; }
+    .reveal h2 { font-size: 1.35em; margin-bottom: .5em; }
+    .reveal h3 { font-size: 1.05em; color: var(--accent-bright); }
+    .reveal strong { color: #fff; }
+    .reveal em { color: var(--accent-bright); font-style: normal; }
+    .reveal a { color: var(--accent-2); }
+
+    .reveal section img,
+    .reveal section svg { background: transparent; border: none; box-shadow: none; margin: 0; }
+
+    /* Background gradient overlay */
+    .reveal .backgrounds { background:
+      radial-gradient(1200px 700px at 78% -8%, rgba(47,165,114,.18), transparent 60%),
+      radial-gradient(1000px 620px at 8% 112%, rgba(56,189,248,.12), transparent 55%),
+      #0b0f14; }
+
+    /* Accent + utility */
+    .accent { color: var(--accent-bright); }
+    .blue { color: var(--accent-2); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+    .muted { color: var(--muted); }
+    .small { font-size: .72em; }
+    .tiny { font-size: .6em; }
+    .center { text-align: center; }
+    .kicker {
+      display:inline-block; font-size:.5em; letter-spacing:.28em; text-transform:uppercase;
+      color: var(--accent); font-weight:700; margin-bottom:.6em; border:1px solid var(--line);
+      padding:.35em .8em; border-radius:999px; background: rgba(47,165,114,.08);
+    }
+
+    /* Cards & grids */
+    .grid { display:grid; gap: .8em; }
+    .g2 { grid-template-columns: 1fr 1fr; }
+    .g3 { grid-template-columns: 1fr 1fr 1fr; }
+    .g5-7 { grid-template-columns: 5fr 7fr; align-items:center; }
+    .g6-6 { grid-template-columns: 1fr 1fr; align-items:center; }
+    .g7-5 { grid-template-columns: 7fr 5fr; align-items:center; }
+    .card {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line); border-radius: 16px; padding: .85em 1em;
+      box-shadow: 0 8px 30px rgba(0,0,0,.25);
+    }
+    .card h3 { margin-top: 0; }
+    .card.accent-b { border-color: rgba(47,165,114,.55); box-shadow: 0 0 0 1px rgba(47,165,114,.25), 0 10px 30px rgba(0,0,0,.3); }
+    .card.blue-b { border-color: rgba(56,189,248,.45); }
+
+    .pill { display:inline-block; padding:.15em .6em; border-radius:999px; font-size:.62em;
+      border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--muted); }
+    .pill.ok { color: var(--accent-bright); border-color: rgba(74,222,128,.4); background: rgba(74,222,128,.08); }
+    .pill.no { color: var(--bad); border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); }
+
+    figure { margin: 0; text-align:center; }
+    figure img { border-radius: 12px; max-height: 62vh; display:block; }
+    figcaption { font-size: .52em; color: var(--muted); margin-top: .5em; text-align:center; }
+    .framed { display:inline-block; border:1px solid var(--line); border-radius:14px; padding:.5em; background:#fff; line-height:0; }
+    .framed-dark { display:inline-block; border:1px solid var(--line); border-radius:14px; padding:.5em; background:#0d1117; line-height:0; }
+
+    /* Flow diagram boxes */
+    .flow { display:flex; align-items:stretch; gap:.5em; flex-wrap:wrap; justify-content:center; }
+    .flow .node {
+      background: linear-gradient(180deg,#1d2733,#131a22); border:1px solid var(--line);
+      border-radius:12px; padding:.5em .7em; min-width:0; text-align:center; font-size:.72em;
+    }
+    .flow .node b { color:#fff; display:block; font-size:1.05em; }
+    .flow .node span { color: var(--muted); font-size:.82em; }
+    .flow .node.a { border-color: rgba(47,165,114,.5); }
+    .flow .node.b { border-color: rgba(56,189,248,.5); }
+    .flow .node.c { border-color: rgba(247,185,85,.5); }
+    .flow .arrow { align-self:center; color: var(--accent); font-size:1.2em; font-weight:700; }
+
+    /* Tables */
+    .reveal table { font-size:.66em; border-collapse: collapse; width:100%; }
+    .reveal table th { color:#fff; border-bottom:2px solid var(--accent); padding:.4em .6em; text-align:left; background:rgba(47,165,114,.08); }
+    .reveal table td { border-bottom:1px solid var(--line); padding:.35em .6em; color: var(--ink); }
+    .reveal table tr:hover td { background: rgba(255,255,255,.02); }
+
+    /* Code */
+    .reveal pre { width:100%; box-shadow:none; font-size:.5em; }
+    .reveal pre code { border-radius:12px; padding:1em 1.2em; max-height:none; border:1px solid var(--line); }
+    code.inline { background:#0d1117; border:1px solid var(--line); border-radius:6px; padding:.05em .4em; font-size:.82em; color:var(--accent-bright); }
+
+    .reveal ul { margin-left: 1em; }
+    .reveal li { margin: .28em 0; }
+    .reveal li::marker { color: var(--accent); }
+
+    .katex { font-size: 1.02em; }
+    .eqbox { background:#0d1117; border:1px solid var(--line); border-radius:12px; padding:.5em .8em; text-align:center; }
+
+    .footer { position:absolute; bottom:12px; left:26px; font-size:12px; color:#4b5563; letter-spacing:.05em; }
+    .reveal .slide-number { background: transparent; color:#3b4756; }
+
+    .lead { font-size:1.15em; }
+    .divider { height:1px; background:linear-gradient(90deg,var(--accent),transparent); margin:.6em 0; border:0; }
+    .tag-a { color:var(--accent-bright); font-weight:700; }
+    .tag-b { color:var(--accent-2); font-weight:700; }
+    .hl { background:linear-gradient(180deg,transparent 60%, rgba(47,165,114,.35) 0); padding:0 .1em; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- ============================= 1 · PORTADA ============================= -->
+    <section data-background-gradient="radial-gradient(900px 600px at 70% 20%, rgba(47,165,114,.22), transparent), linear-gradient(180deg,#0b0f14,#0b0f14)">
+      <div class="center">
+        <span class="kicker">Teoría de la Información · UNAL 2026</span>
+        <h1>ANS&#8209;STC</h1>
+        <h2 style="color:var(--accent-bright); font-weight:600; margin-top:-.1em;">Esteganografía de Imágenes Robusta y Marca de Agua Anti&#8209;Deepfake</h2>
+        <p class="lead muted" style="max-width:24em; margin:.4em auto 1.2em;">
+          Ocultar un mensaje verificable dentro de una imagen para que permanezca <em>invisible</em> —
+          y <em>sobreviva</em> al canal con pérdidas de las redes&nbsp;sociales.
+        </p>
+        <div class="grid g3" style="max-width:30em; margin:0 auto;">
+          <div class="card center"><b class="accent">Brotli</b><div class="small muted">compresión entrópica</div></div>
+          <div class="card center"><b class="accent">ISS</b><div class="small muted">espectro ensanchado</div></div>
+          <div class="card center"><b class="accent">Malla canónica</b><div class="small muted">resiste el reescalado</div></div>
+        </div>
+        <p class="small muted" style="margin-top:1.3em;">
+          Michael S. Betancourt Gelves<br>
+          <span class="tiny">Prof. Oswaldo Rojas Camacho — Universidad Nacional de Colombia</span>
+        </p>
+      </div>
+      <div class="footer">↓ / Espacio para avanzar · Esc para vista general</div>
+    </section>
+
+    <!-- ============================= 2 · MOTIVACIÓN ============================= -->
+    <section>
+      <span class="kicker">El porqué</span>
+      <h2>Ver ya no es creer</h2>
+      <div class="grid g7-5">
+        <div>
+          <p>La IA generativa ha inundado internet de <em>deepfakes</em>. Ya no podemos confiar en
+          una imagen a simple vista — necesitamos una vía <strong>matemática</strong> para probar su
+          <span class="hl">autenticidad</span> y su <span class="hl">procedencia</span>.</p>
+          <p>Una <strong>marca de agua invisible de procedencia</strong> incrusta una firma verificable
+          <em>dentro de los píxeles</em>. El reto: esa firma debe <strong>persistir</strong>
+          tras comprimir, reescalar y re&#8209;publicar la imagen.</p>
+          <div class="card accent-b">
+            <span class="muted small">Esto es, en esencia, un problema de</span>
+            <h3 style="margin:.1em 0;">Teoría de la Información</h3>
+            <span class="small">Transmitir un mensaje oculto por un <em>canal ruidoso</em> (la compresión
+            y el reescalado de las plataformas) de forma imperceptible y recuperable.</span>
+          </div>
+        </div>
+        <figure>
+          <div class="framed"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Steganography_original.png" alt="Esteganografía: una imagen de un árbol que oculta en secreto otra imagen"></div>
+          <figcaption>Esteganografía clásica: esta foto de un árbol oculta en secreto otra imagen entera.<br><span class="tiny">Cyp, CC BY&#8209;SA 3.0, vía Wikimedia Commons</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================= 3 · EL PROBLEMA (formal) ============================= -->
+    <section>
+      <span class="kicker">El problema</span>
+      <h2>Fragilidad ante un canal con pérdidas</h2>
+      <div class="grid g6-6">
+        <div>
+          <p>La esteganografía tradicional oculta bits en el dominio espacial o en bloques 8×8 de la
+          DCT. Al subir la imagen a una red social, esta se <em>recomprime</em> y, sobre todo, se
+          <em>reescala</em> — ambas operaciones <strong>desincronizan la retícula 8×8</strong> y
+          destruyen los bits ocultos.</p>
+          <p>Formalmente, con portador <strong>x</strong>, secreto <strong>m</strong> y operador de
+          canal <strong>C</strong> (reescalado ∘ recompresión), se necesita un codificador&nbsp;E y
+          un decodificador&nbsp;D tales que:</p>
+          <div class="eqbox">\[ D\big(C(E(\mathbf{x},\mathbf{m}))\big) = \mathbf{m} \]</div>
+          <p class="small muted" style="margin-top:.5em;">…con alta probabilidad, manteniendo pequeña la
+          distorsión perceptual entre <strong>x</strong> y <strong>E(x,m)</strong>.</p>
+        </div>
+        <div class="card">
+          <h3>Dos objetivos en conflicto</h3>
+          <div class="flow" style="justify-content:flex-start; margin:.4em 0;">
+            <div class="node a" style="min-width:8em;"><b>Robustez</b><span>sobrevivir al canal</span></div>
+            <div class="arrow">⟷</div>
+            <div class="node c" style="min-width:8em;"><b>Imperceptibilidad</b><span>seguir invisible</span></div>
+          </div>
+          <hr class="divider">
+          <p class="small">Cada decibelio gastado en <em>sobrevivir</em> a la compresión es un decibelio
+          de <em>huella estadística</em>. Todo el proyecto es un ejercicio de navegar este
+          compromiso, y de él nace nuestra marca de agua robusta.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 4 · LA SOLUCIÓN ============================= -->
+    <section>
+      <span class="kicker">La solución · Panorama</span>
+      <h2>Una marca de agua robusta</h2>
+      <div class="grid g7-5">
+        <div class="card blue-b">
+          <h3 class="blue">El sistema, en una frase</h3>
+          <p class="small">Incrusta un <strong>texto corto y verificable</strong> (≤ <strong>512 B</strong>
+          comprimidos) que sobrevive el recorrido <em>completo</em> de Facebook, WhatsApp y Pinterest —
+          reescalado <em>y</em> recompresión — sin dejar de ser invisible.</p>
+          <div class="flow" style="justify-content:flex-start; margin-top:.4em">
+            <span class="node b">Brotli</span><span class="arrow" style="color:var(--accent-2)">→</span>
+            <span class="node b">Reed&#8209;Solomon</span><span class="arrow" style="color:var(--accent-2)">→</span>
+            <span class="node b">ISS / malla canónica</span>
+          </div>
+          <p class="small muted" style="margin-top:.5em">Para: una marca de procedencia anti&#8209;deepfake.</p>
+        </div>
+        <div class="card">
+          <h3>De dónde viene el nombre</h3>
+          <p class="small">El proyecto se llama <strong>ANS&#8209;STC</strong> por su punto de partida
+          teórico: la esteganografía de mínima distorsión (<span class="accent">ANS</span> +
+          <span class="accent">STC</span>). Ese enfoque oculta <em>mucha</em> información pero
+          <strong>muere ante el reescalado</strong>.</p>
+          <p class="small">Tomamos de él su principio rector —<em>cambiar el portador lo menos
+          posible</em>— y lo llevamos a un esquema que sí resiste el cambio de tamaño: el
+          <strong>espectro ensanchado</strong>.</p>
+        </div>
+      </div>
+      <table style="margin-top:.7em">
+        <tr><th>Propiedad</th><th>La marca de agua robusta</th></tr>
+        <tr><td>Capacidad</td><td>texto, ≤ 512 B comprimidos</td></tr>
+        <tr><td>Sobrevive recompresión JPEG</td><td><span class="pill ok">sí</span></td></tr>
+        <tr><td>Sobrevive el <b>reescalado</b> de redes</td><td><span class="pill ok">sí</span></td></tr>
+      </table>
+    </section>
+
+    <!-- ============================= 5 · TUBERÍA ============================= -->
+    <section>
+      <span class="kicker">Arquitectura</span>
+      <h2>La tubería, de principio a fin</h2>
+      <div class="flow" style="margin:.3em 0 .2em;">
+        <div class="node b"><b>Texto</b><span>hasta 512 B</span></div>
+        <div class="arrow" style="color:var(--accent-2)">→</div>
+        <div class="node b"><b>Brotli</b><span>compresión entrópica</span></div>
+        <div class="arrow" style="color:var(--accent-2)">→</div>
+        <div class="node b"><b>Reed&#8209;Solomon</b><span>+ paridad</span></div>
+        <div class="arrow" style="color:var(--accent-2)">→</div>
+        <div class="node b"><b>ISS / malla canónica</b><span>espectro ensanchado</span></div>
+        <div class="arrow" style="color:var(--accent-2)">→</div>
+        <div class="node b"><b>PNG marcado</b><span>invisible y robusto</span></div>
+      </div>
+      <hr class="divider">
+      <div class="grid g3">
+        <div class="card"><h3>Codif. de fuente</h3><p class="small">Menos bits que ocultar ⇒ cada bit se reparte sobre más coeficientes ⇒ más robustez y calidad. <span class="muted">(Shannon)</span></p></div>
+        <div class="card"><h3>Codif. de canal</h3><p class="small">Reed&#8209;Solomon repara los errores de byte que el reescalado y la compresión dejan pasar.</p></div>
+        <div class="card"><h3>Reparto robusto</h3><p class="small">El espectro ensanchado sobre una malla fija hace que el cambio de tamaño no borre la marca.</p></div>
+      </div>
+      <p class="small muted center" style="margin-top:.5em">Cada etapa corresponde a un resultado clásico de teoría de la información — las siguientes láminas las toman una por una.</p>
+    </section>
+
+    <!-- ============================= 6 · ENTROPÍA DE SHANNON ============================= -->
+    <section>
+      <span class="kicker">Fundamento 1 · Codificación de fuente</span>
+      <h2>Entropía de Shannon — el suelo de bits</h2>
+      <div class="grid g7-5">
+        <div>
+          <p>La entropía de una fuente <strong>X</strong> con distribución <em>p(x)</em> es el número
+          medio de bits/símbolo necesarios para representarla sin pérdida:</p>
+          <div class="eqbox">\[ H(X) = -\sum_{x} p(x)\,\log_2 p(x) \]</div>
+          <p>El <strong>teorema de codificación de fuente</strong> de Shannon (1948): ningún código sin
+          pérdida baja de <em>H(X)</em> bits/símbolo en promedio — y ese límite es alcanzable
+          asintóticamente.</p>
+          <div class="card accent-b small">
+            <strong>Por qué importa aquí:</strong> comprimir la carga <em>antes</em> de incrustarla
+            reduce los bits a ocultar. Menos bits ⇒ <span class="hl">menos cambios de coeficientes</span>
+            ⇒ menor distorsión <em>y</em> más espacio para corrección de errores.
+          </div>
+        </div>
+        <figure>
+          <div class="framed"><img src="https://upload.wikimedia.org/wikipedia/commons/9/99/ClaudeShannon_MFO3807.jpg" alt="Retrato de Claude Shannon" style="max-height:44vh"></div>
+          <figcaption>Claude E. Shannon (1916–2001), padre de la teoría de la información.<br><span class="tiny">Konrad Jacobs, CC BY&#8209;SA 2.0 DE, vía Wikimedia Commons</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================= 7 · FAMILIA DE CODIF. ENTRÓPICA ============================= -->
+    <section>
+      <span class="kicker">Fundamento 1 · Codificación de fuente</span>
+      <h2>De Huffman a ANS</h2>
+      <div class="grid g5-7">
+        <figure>
+          <div class="framed"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Huffman_tree_2.svg/960px-Huffman_tree_2.svg.png" alt="Un árbol de codificación de Huffman" style="max-height:42vh"></div>
+          <figcaption>Un árbol de Huffman: los símbolos frecuentes reciben códigos más cortos.<br><span class="tiny">Meteficha, dominio público, vía Wikimedia Commons</span></figcaption>
+        </figure>
+        <div>
+          <div class="card" style="margin-bottom:.5em"><h3>Huffman (1952)</h3><p class="small">Código prefijo óptimo de <em>longitud entera</em>. Rápido, pero desperdicia hasta ~1 bit/símbolo.</p></div>
+          <div class="card accent-b" style="margin-bottom:.5em"><h3>Lempel&#8209;Ziv / LZ77 (1977)</h3><p class="small">Sustituye subcadenas repetidas por referencias <em>(distancia, longitud)</em> — captura la redundancia contextual. Es la base de <strong>Brotli</strong>, el compresor que usamos.</p></div>
+          <div class="card"><h3>ANS — Sistemas Numéricos Asimétricos (Duda 2014)</h3><p class="small">Velocidad de Huffman <strong>+</strong> compresión aritmética. Da nombre al proyecto y es el codificador entrópico de referencia (véase la siguiente lámina).</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 8 · HERENCIA ANS-STC ============================= -->
+    <section>
+      <span class="kicker">Contexto · El nombre del proyecto</span>
+      <h2>La herencia ANS&#8209;STC</h2>
+      <div class="grid g7-5">
+        <div>
+          <p>Una línea muy potente de la esteganografía combina un codificador entrópico como
+          <strong>ANS</strong> con los <strong>Códigos de Síndrome&#8209;Trellis (STC)</strong>: dado un
+          mensaje <strong>m</strong>, el STC busca el estego <strong>y</strong> que cumple
+          <em>H·y = m</em> <strong>cambiando lo menos posible</strong> el portador.</p>
+          <div class="eqbox small">\[ \mathbf{y}=\arg\!\!\min_{\mathbf{z}:\,\mathbf{H}\mathbf{z}=\mathbf{m}}\ \sum_i \rho_i\,[\,x_i\neq z_i\,] \]</div>
+          <p class="small">Ese costo se mide con funciones perceptuales tipo J&#8209;UNIWARD (wavelets) y se
+          resuelve con <em>Viterbi</em>. Es óptimo para ocultar <em>mucha</em> información…
+          <strong class="warn">pero muere cuando la imagen se reescala.</strong></p>
+        </div>
+        <div class="card accent-b">
+          <h3>Qué nos llevamos de aquí</h3>
+          <p class="small">El <strong>principio rector</strong>: <span class="hl">minimizar los cambios
+          en el portador</span>. Es lo que hace una marca a la vez robusta e invisible.</p>
+          <hr class="divider">
+          <p class="small">Pero lo aplicamos con otra herramienta —el <strong>espectro ensanchado</strong>—
+          que sí tolera el reescalado. Por eso el sistema implementado <em>no</em> usa ANS ni STC:
+          usa <strong>Brotli</strong> para comprimir e <strong>ISS</strong> para incrustar.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 9 · DCT ============================= -->
+    <section>
+      <span class="kicker">Fundamento 2 · Transformada y percepción</span>
+      <h2>La Transformada Discreta del Coseno</h2>
+      <div class="grid g7-5">
+        <div>
+          <p>Nuestro sistema opera en el dominio de la <strong>DCT</strong>. La DCT&#8209;II 2&#8209;D ortonormal de
+          un bloque <em>N×N</em> es:</p>
+          <div class="eqbox small">\[ F(u,v)=\alpha(u)\alpha(v)\!\sum_{x=0}^{N-1}\sum_{y=0}^{N-1} f(x,y)\cos\!\Big[\tfrac{\pi(2x{+}1)u}{2N}\Big]\cos\!\Big[\tfrac{\pi(2y{+}1)v}{2N}\Big] \]</div>
+          <p class="small">Introducida por Ahmed, Natarajan y Rao (1974). <em>Concentra la energía</em> en
+          pocos coeficientes de baja frecuencia — la misma propiedad que explota JPEG.</p>
+          <div class="card">
+            <h3>¿Dónde incrustamos?</h3>
+            <p class="small">Ni en el término <span class="bad">DC</span> (muy visible) ni en las
+            frecuencias <span class="bad">más altas</span> (JPEG las destruye primero) —
+            ocultamos en la <span class="accent">banda de media frecuencia</span>: el punto óptimo de robustez.</p>
+          </div>
+        </div>
+        <figure>
+          <div class="framed"><img src="https://upload.wikimedia.org/wikipedia/commons/2/23/Dctjpeg.png" alt="Las 64 funciones base de la DCT de 8x8" style="max-height:34vh"></div>
+          <figcaption>Los 64 patrones base de la DCT de 8×8.<br><span class="tiny">FelixH, dominio público, vía Wikimedia Commons</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================= 10 · ZIGZAG + ENMASCARAMIENTO ============================= -->
+    <section>
+      <span class="kicker">Fundamento 2 · Transformada y percepción</span>
+      <h2>Orden de frecuencias y el ojo humano</h2>
+      <div class="grid g5-7">
+        <figure>
+          <div class="framed"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/JPEG_ZigZag.svg/500px-JPEG_ZigZag.svg.png" alt="Orden de barrido en zig-zag de JPEG sobre un bloque 8x8" style="max-height:40vh"></div>
+          <figcaption>El barrido en zig&#8209;zag ordena los coeficientes de baja→alta frecuencia.<br><span class="tiny">Alex Khristov, dominio público, vía Wikimedia Commons</span></figcaption>
+        </figure>
+        <div>
+          <p>El <strong>barrido en zig&#8209;zag</strong> ordena los coeficientes de baja→alta frecuencia; es
+          como JPEG recorre cada bloque. La lección que aprovechamos: la <strong>banda de media
+          frecuencia</strong> es el punto óptimo, y nuestra marca incrusta en una banda media
+          (de 8 a 400 ciclos) de la DCT global.</p>
+          <div class="card">
+            <h3>Enmascaramiento por contraste (Watson 1993)</h3>
+            <p class="small">El sistema visual humano tolera mucho más ruido en regiones <em>texturadas</em>
+            que en las lisas (cielo, piel). Tanto aquel enfoque clásico como nuestra marca lo aprovechan:</p>
+            <ul class="small">
+              <li><span class="tag-a">Fondo (STC)</span> — una función de costo dirige los cambios a la textura.</li>
+              <li><span class="tag-b">Nuestra marca</span> — una máscara perceptual escala la señal según la actividad local.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 15 · REED-SOLOMON ============================= -->
+    <section>
+      <span class="kicker">Fundamento 3 · Codificación de canal</span>
+      <h2>Reed&#8209;Solomon repara las ráfagas</h2>
+      <div class="grid g7-5">
+        <div>
+          <p>Un código <strong>RS(n,k)</strong> sobre <em>GF(2<sup>8</sup>)</em> trata <em>k</em> bytes de
+          datos como un polinomio evaluado en <em>n = 255</em> puntos, añadiendo <em>n−k</em> bytes de
+          paridad. Corrige</p>
+          <div class="eqbox">\[ t=\left\lfloor \frac{n-k}{2} \right\rfloor \text{ bytes erróneos por bloque.} \]</div>
+          <p class="small">Perfecto para <em>ráfagas</em>: un byte cuenta como un símbolo sin importar
+          cuántos de sus bits fallen — justo el tipo de error que dejan el reescalado y la compresión.</p>
+          <ul class="small">
+            <li>En nuestra marca: <strong>n−k = 32</strong> → corrige 16 bytes por bloque.</li>
+          </ul>
+          <p class="tiny muted">Un CRC&#8209;16/CCITT en la cabecera evita <em>falsos positivos</em>: una imagen sin marca falla el CRC y se reporta como “sin marca”, nunca como basura.</p>
+        </div>
+        <figure>
+          <div class="framed"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/QR_Code_Structure_Example_3.svg/960px-QR_Code_Structure_Example_3.svg.png" alt="Estructura de un código QR, que usa corrección de errores Reed-Solomon" style="max-height:38vh"></div>
+          <figcaption>Los códigos QR usan los mismos códigos Reed&#8209;Solomon para sobrevivir al daño.<br><span class="tiny">Bobmath, CC BY&#8209;SA 3.0, vía Wikimedia Commons</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================= 17 · EL SISTEMA (divisor) ============================= -->
+    <section data-background-gradient="radial-gradient(900px 600px at 70% 10%, rgba(56,189,248,.20), transparent), #0b0f14">
+      <div class="center">
+        <span class="pill" style="color:var(--accent-2);border-color:rgba(56,189,248,.5); font-size:.8em">El sistema</span>
+        <h1 style="font-size:1.7em">La Marca de Agua Robusta</h1>
+        <p class="lead muted">Cómo sobrevive a Facebook, WhatsApp y Pinterest</p>
+        <div class="flow" style="margin-top:1em">
+          <span class="node b">malla canónica</span><span class="arrow" style="color:var(--accent-2)">·</span>
+          <span class="node b">Espectro Ensanchado Mejorado</span><span class="arrow" style="color:var(--accent-2)">·</span>
+          <span class="node b">fuerza adaptativa</span><span class="arrow" style="color:var(--accent-2)">·</span>
+          <span class="node b">cota de Nyquist</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 18 · POR QUÉ MUERE LA DCT POR BLOQUES ============================= -->
+    <section>
+      <span class="kicker">El sistema · La clave</span>
+      <h2>Por qué el reescalado es letal</h2>
+      <div class="grid g6-6">
+        <div>
+          <p>Facebook, WhatsApp y Pinterest <strong>reducen <em>y</em> recomprimen</strong> cada subida.
+          Reducir desincroniza la retícula de bloques 8×8 de la que depende la esteganografía clásica —
+          la extracción devuelve <code class="inline">header sync mismatch</code>.</p>
+          <div class="card blue-b">
+            <h3>La solución: olvidar la retícula</h3>
+            <p class="small">Nuestra marca incrusta sobre una <strong>única transformada global</strong> a una
+            <em>resolución canónica</em>, así cualquier reescalado se deshace antes de decodificar.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>El contenedor completo</h3>
+          <div class="flow" style="justify-content:flex-start">
+            <span class="node b">texto</span><span class="arrow" style="color:var(--accent-2)">→</span>
+            <span class="node b">Brotli</span><span class="arrow" style="color:var(--accent-2)">→</span>
+            <span class="node b">Reed&#8209;Solomon</span>
+          </div>
+          <p class="small muted" style="margin:.5em 0 0">precedido por una cabecera ultra&#8209;redundante de 64 bits:</p>
+          <div class="eqbox tiny" style="margin-top:.3em">MAGIC │ LEN │ NSYM │ CRC&#8209;16 │ FLAGS</div>
+          <p class="tiny muted" style="margin-top:.4em">La cabecera se decodifica primero y dice cuántos bits de carga leer — así los mensajes cortos usan menos bits ⇒ mayor calidad y más margen.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 19 · RESINCRONIZACIÓN CANÓNICA ============================= -->
+    <section>
+      <span class="kicker">El sistema · Idea 1</span>
+      <h2>Resincronización a resolución canónica</h2>
+      <p>Tanto el insertor como el extractor llevan primero la luminancia a una malla fija
+      <strong>S × S</strong> (S = 1152):</p>
+      <div class="eqbox">\[ Y_c=\mathcal{R}_{S\times S}(Y) \]</div>
+      <div class="flow" style="margin:.7em 0">
+        <div class="node b"><b>Cualquier tamaño</b><span>salida de la plataforma</span></div>
+        <div class="arrow" style="color:var(--accent-2)">→</div>
+        <div class="node b"><b>Remuestreo a S×S</b><span>malla canónica</span></div>
+        <div class="arrow" style="color:var(--accent-2)">→</div>
+        <div class="node b"><b>DCT global</b><span>decodificar aquí</span></div>
+      </div>
+      <div class="card"><p class="small">Cualquiera que sea el tamaño arbitrario al que una plataforma remuestree, el extractor lo <em>devuelve</em> a la misma malla canónica — la retícula de incrustación <span class="hl">nunca se pierde</span>. Solo la <em>perturbación</em> de la marca se remuestrea de vuelta al tamaño nativo, así la imagen conserva su aspecto y se ve limpia.</p></div>
+    </section>
+
+    <!-- ============================= 20 · ISS ============================= -->
+    <section>
+      <span class="kicker">El sistema · Idea 2 · Algoritmo destacado</span>
+      <h2>Espectro Ensanchado Mejorado (ISS)</h2>
+      <p>Cada bit <em>b<sub>i</sub></em> se reparte sobre un grupo <em>G<sub>i</sub></em> de <em>L</em>
+      coeficientes DCT con signos pseudoaleatorios <em>s<sub>c</sub></em>. El espectro ensanchado clásico
+      deja que la imagen actúe como ruido; el ISS (Malvar y Florêncio 2003) lo <strong>cancela
+      algebraicamente</strong>.</p>
+      <div class="grid g6-6" style="align-items:start">
+        <div>
+          <p class="small">Con objetivo \(\tau_i=\alpha(2b_i-1)\) y proyección previa \(p_i\):</p>
+          <div class="eqbox small">\[ D'(c)=D(c)+\frac{\tau_i-p_i}{\sqrt{L}}\,s_c \]</div>
+          <p class="small">Como \(s_c^2=1\), la proyección <em>posterior</em> resulta exactamente \(\tau_i\) —
+          el término del portador \(p_i\) <strong>se anula</strong>.</p>
+        </div>
+        <div>
+          <p class="small">La detección es <em>ciega</em> y solo por <strong>signo</strong>:</p>
+          <div class="eqbox small">\[ \hat b_i=\mathbb{1}\!\left[\ \textstyle\sum_{c\in G_i} s_c\,\tilde D(c)>0\ \right] \]</div>
+          <div class="card blue-b small">El extractor nunca necesita conocer la amplitud <em>α</em>. Enorme ganancia de procesamiento ⇒ tasa de error de bit casi nula a través de la compresión.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 21 · NYQUIST ============================= -->
+    <section>
+      <span class="kicker">El sistema · Idea 3</span>
+      <h2>La cota de Nyquist–Shannon</h2>
+      <div class="grid g7-5">
+        <div>
+          <p>La marca ocupa frecuencias espaciales hasta <em>f<sub>hi</sub></em>. Por el
+          <strong>teorema de muestreo</strong>, reescalar a <em>W</em> píxeles solo preserva frecuencias
+          por debajo de <em>W/2</em> — todo lo superior es aniquilado por el filtro anti&#8209;aliasing.</p>
+          <p>Insertar sobre un original enorme obliga a la marca a atravesar una gran razón de remuestreo
+          (canónico → nativo → descarga), y dos núcleos de interpolación imperfectos
+          <em>erosionan la banda media</em>.</p>
+          <div class="card accent-b">
+            <h3>La solución — acotar el tamaño de trabajo</h3>
+            <p class="small">Todo original cuyo lado mayor exceda <strong>S<sub>máx</sub> = 2048</strong> px
+            se reduce primero. Esto acota la razón de remuestreo <em>y</em> coincide con lo que las
+            plataformas conservan igual — la corrección clave para fotos de alta resolución.</p>
+          </div>
+        </div>
+        <figure>
+          <div class="framed-dark"><img src="https://upload.wikimedia.org/wikipedia/commons/4/43/Nyquist_sampling.gif" alt="Animación del muestreo de Nyquist reconstruyendo una señal" style="max-height:26vh"></div>
+          <figcaption>La reconstrucción mejora cuando la tasa de muestreo supera 2× la frecuencia máxima.<br><span class="tiny">Jacopo Bertolotti, CC0, vía Wikimedia Commons</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================= 22 · FUERZA ADAPTATIVA + MÁSCARA ============================= -->
+    <section>
+      <span class="kicker">El sistema · Ideas 4 y 5</span>
+      <h2>Fuerza adaptativa y máscara perceptual</h2>
+      <div class="grid g6-6">
+        <div class="card">
+          <h3>Fuerza por carga útil</h3>
+          <p class="small">La fiabilidad por correlación crece como \(\sqrt{L}\) (coeficientes por bit). Un
+          mensaje largo tiene <em>L</em> pequeño y pierde margen, así la amplitud sube automáticamente:</p>
+          <div class="eqbox small">\[ \alpha_{\text{carga}}=\alpha\cdot\min\!\Big(\beta_{\max},\ \sqrt{\tfrac{C_{\text{ref}}}{L}}\Big) \]</div>
+          <p class="tiny muted">C<sub>ref</sub>=400, β<sub>máx</sub>=1.60. Detección por signo ⇒ transparente para el extractor.</p>
+        </div>
+        <div class="card">
+          <h3>Máscara adaptativa al contenido</h3>
+          <p class="small">La perturbación espacial se escala por la actividad local (varianza en una ventana
+          <em>w×w</em>), concentrando la marca en la textura y retirándola de cielo/piel lisos:</p>
+          <div class="eqbox small">\[ \mathrm{mask}=\mathrm{clip}\!\Big(\tfrac{a(x,y)}{\bar a},\,0.72,\,3.0\Big) \]</div>
+          <p class="tiny muted">El suelo 0.72 conserva marca suficiente en portadores lisos para sobrevivir descargas pequeñas.</p>
+        </div>
+      </div>
+      <p class="small muted center" style="margin-top:.5em">Mensaje corto → repartido sobre cientos de coeficientes, insertado en voz baja (~38 dB). Carga completa → la amplitud sube para mantener el mismo margen de canal (~31 dB).</p>
+    </section>
+
+    <!-- ============================= 23 · RESULTADOS ============================= -->
+    <section>
+      <span class="kicker">Resultados · Medido</span>
+      <h2>Sobrevive todo el recorrido social</h2>
+      <div class="grid g6-6">
+        <div>
+          <h3>Ejecución real marcar/verificar</h3>
+          <pre><code class="language-text" data-trim data-noescape>[watermark] done
+  payload  : 19 B  (max 512 B)
+  PSNR     : 38.45 dB      ✓ invisible
+  survives : FB / WhatsApp / Pinterest
+
+[verify] marca hallada y CRC válido ✓
+  as text : 'authentic:mike-2026'</code></pre>
+        </div>
+        <div>
+          <div class="card accent-b">
+            <h3>Supervivencia validada</h3>
+            <p class="small"><strong>0 errores de bit</strong> / recuperación exacta de una carga de 512
+            bytes a través de tuberías fieles de Facebook, WhatsApp, Pinterest y estado de WhatsApp
+            (reducción a 2048/1600/736/1024 px + JPEG Q60–Q85, 4:2:0) — y aún se recupera de
+            descargas pequeñas del feed de Facebook hasta <strong>~480 px</strong>.</p>
+          </div>
+          <div class="card" style="margin-top:.5em"><p class="small"><span class="warn">Límite honesto:</span> resiste reescalado + recompresión + rotación de 90°, pero <strong>no el recorte duro ni las capturas de pantalla</strong> (mueven la retícula de sincronía). Comparte el PNG marcado sin recortar.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 24 · ESTEGANÁLISIS ============================= -->
+    <section>
+      <span class="kicker">Análisis</span>
+      <h2>¿Qué tan detectable es?</h2>
+      <p>Robustez e indetectabilidad son objetivos <em>opuestos</em>. El proyecto incluye un banco de
+      pruebas para <strong>medir</strong> el compromiso: características <strong>SPAM</strong> de 686&#8209;D
+      (Pevný, Bas y Fridrich 2010) + un <strong>discriminante lineal de Fisher</strong> regularizado,
+      puntuado por el error del esteganalista:</p>
+      <div class="eqbox">\[ P_E=\min_t\ \tfrac12\big(P_{\text{FA}}(t)+P_{\text{MD}}(t)\big)\qquad {\scriptstyle P_E\approx0.5\text{ = indetectable} \;\cdot\; P_E\approx0\text{ = detectable}} \]</div>
+      <table style="margin-top:.5em">
+        <tr><th>Esquema</th><th>P<sub>E</sub></th><th>ROC AUC</th><th>Lectura</th></tr>
+        <tr><td>Marca de agua (ISS, ~35–40 dB)</td><td>~0.00</td><td>~1.00</td><td>totalmente detectable — <em>por diseño</em>; es una marca, no algo encubierto</td></tr>
+      </table>
+      <p class="tiny muted" style="margin-top:.5em">Un patrón de medida relativo de un detector ligero — no una afirmación frente a un esteganalizador CNN moderno. Nuestra marca no busca esconderse: su valor es ser <strong>robusta e infalsificable</strong>, no encubierta.</p>
+    </section>
+
+    <!-- ============================= 25 · MÉTRICAS ============================= -->
+    <section>
+      <span class="kicker">Validación</span>
+      <h2>Las cuatro métricas</h2>
+      <div class="grid g2">
+        <div class="card"><h3>PSNR — imperceptibilidad</h3><div class="eqbox small">\[ \mathrm{PSNR}=10\log_{10}\frac{255^2}{\mathrm{MSE}} \]</div><p class="tiny muted">≈38 dB (corto) … ≈31 dB (carga completa).</p></div>
+        <div class="card"><h3>SSIM — fidelidad estructural</h3><p class="small">Compara luminancia, contraste y estructura en ventanas locales (Wang et al. 2004) — más cercana a la percepción humana que el MSE.</p></div>
+        <div class="card"><h3>BER — integridad</h3><p class="small">Fracción de bits del mensaje erróneos tras el canal; debe caer bajo la capacidad correctora de Reed&#8209;Solomon para una recuperación exacta.</p></div>
+        <div class="card"><h3>Divergencia KL — seguridad</h3><div class="eqbox small">\[ D_{\mathrm{KL}}(P\Vert Q)=\sum_x P(x)\log\tfrac{P(x)}{Q(x)} \]</div><p class="tiny muted">ε&#8209;seguridad de Cachin; minimizar cambios (compresión + máscara) la reduce.</p></div>
+      </div>
+    </section>
+
+    <!-- ============================= 26 · ARQUITECTURA ============================= -->
+    <section>
+      <span class="kicker">Ingeniería</span>
+      <h2>Limpio, probado, portable</h2>
+      <div class="grid g6-6">
+        <div>
+          <h3>Mapa de módulos <span class="muted small">(<code class="inline">ans_stc/</code>)</span></h3>
+          <table>
+            <tr><th>Módulo</th><th>Responsabilidad</th></tr>
+            <tr><td><code class="inline">robust_watermark</code></td><td>ISS · malla canónica · enmascaramiento</td></tr>
+            <tr><td><code class="inline">steganalysis</code></td><td>banco de pruebas SPAM + Fisher</td></tr>
+            <tr><td><code class="inline">channel_simulator</code></td><td>supervivencia a reescalado + JPEG</td></tr>
+            <tr><td><code class="inline">config</code></td><td>parámetros compartidos</td></tr>
+          </table>
+        </div>
+        <div>
+          <div class="card accent-b center">
+            <h1 style="font-size:2.4em; margin:.1em 0">94</h1>
+            <p class="small">pruebas superadas — cubren el ciclo marcar/verificar, la robustez al reescalado y JPEG, y el rechazo de imágenes sin marca</p>
+          </div>
+          <div class="grid g2" style="margin-top:.6em">
+            <div class="card center small"><b>3</b><br><span class="muted">formas de ejecutar</span><br><span class="tiny">GUI · CLI · app autónoma</span></div>
+            <div class="card center small"><b>PyInstaller</b><br><span class="muted">binario sin Python</span><br><span class="tiny">macOS · Win · Linux</span></div>
+          </div>
+          <p class="tiny muted center" style="margin-top:.5em">NumPy/SciPy/Pillow puro — sin ML de caja negra.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= 27 · DEMO ============================= -->
+    <section>
+      <span class="kicker">Pruébalo</span>
+      <h2>Todo el sistema en tres comandos</h2>
+      <pre><code class="language-bash" data-trim data-noescape>
+# ── Marcar una imagen (texto de hasta 512 bytes comprimidos) ──
+python cli.py watermark --cover photo.jpg --text "authentic:mike-2026" --out marked.png
+
+# ── Leer la marca (incluso tras pasar por una red social) ─────
+python cli.py verify    --stego downloaded_from_facebook.jpg
+
+# ── Medir la detectabilidad (esteganálisis) ────────────────
+python cli.py steganalysis --scheme watermark --images ./photos
+      </code></pre>
+      <p class="small muted center">GUI: <code class="inline">python app.py</code> · Construir una app autónoma: <code class="inline">pyinstaller ANS-STC.spec</code></p>
+    </section>
+
+    <!-- ============================= 28 · CONCLUSIONES ============================= -->
+    <section>
+      <span class="kicker">Conclusiones</span>
+      <h2>Un principio lo une todo</h2>
+      <div class="card accent-b center" style="margin-bottom:.6em">
+        <p class="lead" style="margin:.2em 0">Minimizar el número de cambios al portador —
+        vía <span class="accent">compresión entrópica</span>, <span class="accent">reparto por espectro
+        ensanchado</span> y <span class="accent">enmascaramiento perceptual</span> — maximiza a la vez la
+        robustez <em>y</em> la imperceptibilidad.</p>
+      </div>
+      <div class="grid g3">
+        <div class="card"><h3>Codif. de fuente</h3><p class="small">Shannon · Huffman/LZ · Brotli</p></div>
+        <div class="card"><h3>Proces. de señales</h3><p class="small">DCT · espectro ensanchado ISS · cota de Nyquist · enmascaramiento perceptual</p></div>
+        <div class="card"><h3>Codif. de canal</h3><p class="small">Reed&#8209;Solomon · CRC&#8209;16 · malla canónica</p></div>
+      </div>
+      <p class="small center" style="margin-top:.6em">El sistema entrega una <strong>marca de procedencia anti&#8209;deepfake</strong> funcional que sobrevive a Facebook, WhatsApp y Pinterest sin sacrificar la invisibilidad.</p>
+    </section>
+
+    <!-- ============================= 29 · GRACIAS / REFS ============================= -->
+    <section data-background-gradient="radial-gradient(900px 600px at 50% 0%, rgba(47,165,114,.20), transparent), #0b0f14">
+      <div class="center">
+        <span class="kicker">Gracias</span>
+        <h1 style="font-size:1.7em">¿Preguntas?</h1>
+        <p class="muted">Una <strong>guía de estudio de algoritmos</strong> acompaña esta presentación.</p>
+        <hr class="divider" style="max-width:20em; margin:1em auto">
+        <p class="tiny muted" style="max-width:34em; margin:0 auto; line-height:1.6">
+          Referencias clave: Shannon 1948 · Huffman 1952 · Ziv&amp;Lempel 1977 · Duda 2014 (ANS) ·
+          Ahmed&nbsp;et&nbsp;al. 1974 (DCT) · Reed&amp;Solomon 1960 · Viterbi 1967 ·
+          Filler&nbsp;et&nbsp;al. 2011 (STC) · Holub&nbsp;et&nbsp;al. 2014 (J&#8209;UNIWARD) ·
+          Cox&nbsp;et&nbsp;al. 1997 y Malvar&amp;Florêncio 2003 (espectro ensanchado) ·
+          Nyquist 1928 / Shannon 1949 · Watson 1993 · Wang&nbsp;et&nbsp;al. 2004 (SSIM) ·
+          Pevný&nbsp;et&nbsp;al. 2010 (SPAM) · Cachin 1998.
+        </p>
+        <p class="small accent" style="margin-top:1.2em">ANS&#8209;STC · Teoría de la Información · UNAL 2026</p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/math/math.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    transitionSpeed: 'default',
+    width: 1280,
+    height: 760,
+    margin: 0.045,
+    minScale: 0.2,
+    maxScale: 2.0,
+    plugins: [ RevealHighlight, RevealNotes, RevealMath.KaTeX ],
+    katex: {
+      version: 'latest',
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true }
+      ],
+      ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+    }
+  });
+</script>
+</body>
+</html>
