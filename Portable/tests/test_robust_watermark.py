@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from ans_stc.robust_watermark import (
+from rsw.robust_watermark import (
     MAX_PAYLOAD_BYTES,
     WatermarkConfig,
     WatermarkError,
@@ -106,7 +106,7 @@ def test_incompressible_payload_over_max_rejected(sample_cover, tmp_path):
 
 
 def test_text_over_raw_max_rejected(sample_cover, tmp_path):
-    from ans_stc.robust_watermark import MAX_TEXT_BYTES
+    from rsw.robust_watermark import MAX_TEXT_BYTES
     out = str(tmp_path / "marked.png")
     with pytest.raises(WatermarkError):
         embed_text(sample_cover, "x" * (MAX_TEXT_BYTES + 1), out)
@@ -129,7 +129,7 @@ def test_legacy_uncompressed_header_parses(sample_cover):
     flags=0 / uncompressed, so images marked by an older build still verify."""
     import struct
     import numpy as np
-    from ans_stc.robust_watermark import _MAGIC, _crc16, _parse_header
+    from rsw.robust_watermark import _MAGIC, _crc16, _parse_header
 
     body = struct.pack(">HHB", _MAGIC, 40, 32)
     body += struct.pack(">H", _crc16(body)) + b"\x00"
@@ -198,7 +198,7 @@ def test_survives_small_facebook_download(big_cover, tmp_path):
 def test_high_resolution_original_is_capped_and_survives(tmp_path):
     """Regression: a high-resolution original (the reported failure case) is
     downscaled to the 2048 working cap and still survives a small download."""
-    from ans_stc.robust_watermark import _MAX_WORK_SIZE
+    from rsw.robust_watermark import _MAX_WORK_SIZE
 
     n = 3200
     yy, xx = np.mgrid[0:n, 0:n].astype(float)
@@ -273,7 +273,7 @@ def test_strong_mode_roundtrip(sample_cover, tmp_path):
 
 def test_legacy_band_still_verifies(sample_cover, tmp_path):
     """An image marked with a previous band must still verify (backward compat)."""
-    from ans_stc.robust_watermark import _LEGACY_BAND_HI
+    from rsw.robust_watermark import _LEGACY_BAND_HI
 
     out = str(tmp_path / "legacy.png")
     legacy_cfg = WatermarkConfig(band_hi=_LEGACY_BAND_HI[0], strength=50.0)

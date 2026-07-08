@@ -6,7 +6,7 @@ embedder: the DC term is too visible and the highest frequencies are the first
 casualties of JPEG compression, so the mid band is the robustness sweet spot.
 
 Embedding happens on the parities of the **quantized** coefficients.  A generous
-quantization step (see :data:`ans_stc.config.QUANT_STEP`) gives each parity bit
+quantization step (see :data:`rsw.config.QUANT_STEP`) gives each parity bit
 enough headroom to survive the spatial<->frequency rounding of a lossless
 (PNG) round-trip; anything left over is mopped up by the Reed-Solomon layer.
 """

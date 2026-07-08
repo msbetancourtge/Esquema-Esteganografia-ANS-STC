@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ANS-STC · Esteganografía y Marca de Agua Robusta</title>
+  <title>RSW · Marca de Agua Robusta por Espectro Ensanchado</title>
 
   <!-- reveal.js core + dark theme -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
@@ -97,6 +97,14 @@
     .framed { display:inline-block; border:1px solid var(--line); border-radius:14px; padding:.5em; background:#fff; line-height:0; }
     .framed-dark { display:inline-block; border:1px solid var(--line); border-radius:14px; padding:.5em; background:#0d1117; line-height:0; }
 
+    /* Institutional branding logo (Universidad Nacional). White chip keeps the
+       coat-of-arms legible over the dark theme, matching the .framed language. */
+    .brand-un { background:#fff; border:1px solid var(--line); border-radius:14px;
+      padding:.45em; box-shadow:0 8px 24px rgba(0,0,0,.28); line-height:0; }
+    .brand-un img { display:block; width:100%; height:auto; }
+    .brand-un.corner { position:absolute; top:2px; right:26px; width:74px; z-index:6; }
+    .brand-un.hero { width:118px; margin:0 auto .55em; }
+
     /* Flow diagram boxes */
     .flow { display:flex; align-items:stretch; gap:.5em; flex-wrap:wrap; justify-content:center; }
     .flow .node {
@@ -144,10 +152,11 @@
 
     <!-- ============================= 1 · PORTADA ============================= -->
     <section data-background-gradient="radial-gradient(900px 600px at 70% 20%, rgba(47,165,114,.22), transparent), linear-gradient(180deg,#0b0f14,#0b0f14)">
+      <div class="brand-un corner"><img src="LogoUN.png" alt="Escudo de la Universidad Nacional de Colombia"></div>
       <div class="center">
         <span class="kicker">Teoría de la Información · UNAL 2026</span>
-        <h1>ANS&#8209;STC</h1>
-        <h2 style="color:var(--accent-bright); font-weight:600; margin-top:-.1em;">Esteganografía de Imágenes Robusta y Marca de Agua Anti&#8209;Deepfake</h2>
+        <h1>RSW</h1>
+        <h2 style="color:var(--accent-bright); font-weight:600; margin-top:-.1em;">Marca de Agua Robusta Anti&#8209;Deepfake por Espectro Ensanchado</h2>
         <p class="lead muted" style="max-width:24em; margin:.4em auto 1.2em;">
           Ocultar un mensaje verificable dentro de una imagen para que permanezca <em>invisible</em> —
           y <em>sobreviva</em> al canal con pérdidas de las redes&nbsp;sociales.
@@ -158,7 +167,7 @@
           <div class="card center"><b class="accent">Malla canónica</b><div class="small muted">resiste el reescalado</div></div>
         </div>
         <p class="small muted" style="margin-top:1.3em;">
-          Michael S. Betancourt Gelves<br>
+          Michael S. Betancourt Gelves · Nicolás A. Castellanos Rico<br>
           <span class="tiny">Prof. Oswaldo Rojas Camacho — Universidad Nacional de Colombia</span>
         </p>
       </div>
@@ -242,13 +251,14 @@
         </div>
         <div class="card">
           <h3>De dónde viene el nombre</h3>
-          <p class="small">El proyecto se llama <strong>ANS&#8209;STC</strong> por su punto de partida
-          teórico: la esteganografía de mínima distorsión (<span class="accent">ANS</span> +
-          <span class="accent">STC</span>). Ese enfoque oculta <em>mucha</em> información pero
-          <strong>muere ante el reescalado</strong>.</p>
-          <p class="small">Tomamos de él su principio rector —<em>cambiar el portador lo menos
-          posible</em>— y lo llevamos a un esquema que sí resiste el cambio de tamaño: el
-          <strong>espectro ensanchado</strong>.</p>
+          <p class="small">El proyecto se llama <strong>RSW</strong> —<em>Robust Spread&#8209;spectrum
+          Watermark</em>— porque eso es justo lo que construimos: una marca de agua robusta basada
+          en <span class="accent">espectro ensanchado</span>.</p>
+          <p class="small">Su punto de partida teórico fue la esteganografía de mínima distorsión
+          (<span class="accent">ANS</span> + <span class="accent">STC</span>): oculta <em>mucha</em>
+          información pero <strong>muere ante el reescalado</strong>. De ahí tomamos el principio
+          rector —<em>cambiar el portador lo menos posible</em>— y lo llevamos a un esquema que sí
+          resiste el cambio de tamaño: el <strong>espectro ensanchado</strong>.</p>
         </div>
       </div>
       <table style="margin-top:.7em">
@@ -320,15 +330,15 @@
         <div>
           <div class="card" style="margin-bottom:.5em"><h3>Huffman (1952)</h3><p class="small">Código prefijo óptimo de <em>longitud entera</em>. Rápido, pero desperdicia hasta ~1 bit/símbolo.</p></div>
           <div class="card accent-b" style="margin-bottom:.5em"><h3>Lempel&#8209;Ziv / LZ77 (1977)</h3><p class="small">Sustituye subcadenas repetidas por referencias <em>(distancia, longitud)</em> — captura la redundancia contextual. Es la base de <strong>Brotli</strong>, el compresor que usamos.</p></div>
-          <div class="card"><h3>ANS — Sistemas Numéricos Asimétricos (Duda 2014)</h3><p class="small">Velocidad de Huffman <strong>+</strong> compresión aritmética. Da nombre al proyecto y es el codificador entrópico de referencia (véase la siguiente lámina).</p></div>
+          <div class="card"><h3>ANS — Sistemas Numéricos Asimétricos (Duda 2014)</h3><p class="small">Velocidad de Huffman <strong>+</strong> compresión aritmética. Fue el punto de partida entrópico del proyecto (véase la siguiente lámina); en la práctica, <strong>Brotli</strong> cumple ese papel.</p></div>
         </div>
       </div>
     </section>
 
-    <!-- ============================= 8 · HERENCIA ANS-STC ============================= -->
+    <!-- ============================= 8 · PUNTO DE PARTIDA (ANS + STC) ============================= -->
     <section>
-      <span class="kicker">Contexto · El nombre del proyecto</span>
-      <h2>La herencia ANS&#8209;STC</h2>
+      <span class="kicker">Contexto · El punto de partida</span>
+      <h2>La herencia: ANS + STC</h2>
       <div class="grid g7-5">
         <div>
           <p>Una línea muy potente de la esteganografía combina un codificador entrópico como
@@ -623,7 +633,7 @@
       <h2>Limpio, probado, portable</h2>
       <div class="grid g6-6">
         <div>
-          <h3>Mapa de módulos <span class="muted small">(<code class="inline">ans_stc/</code>)</span></h3>
+          <h3>Mapa de módulos <span class="muted small">(<code class="inline">rsw/</code>)</span></h3>
           <table>
             <tr><th>Módulo</th><th>Responsabilidad</th></tr>
             <tr><td><code class="inline">robust_watermark</code></td><td>ISS · malla canónica · enmascaramiento</td></tr>
@@ -660,7 +670,7 @@ python cli.py verify    --stego downloaded_from_facebook.jpg
 # ── Medir la detectabilidad (esteganálisis) ────────────────
 python cli.py steganalysis --scheme watermark --images ./photos
       </code></pre>
-      <p class="small muted center">GUI: <code class="inline">python app.py</code> · Construir una app autónoma: <code class="inline">pyinstaller ANS-STC.spec</code></p>
+      <p class="small muted center">GUI: <code class="inline">python app.py</code> · Construir una app autónoma: <code class="inline">pyinstaller RSW.spec</code></p>
     </section>
 
     <!-- ============================= 28 · CONCLUSIONES ============================= -->
@@ -684,6 +694,7 @@ python cli.py steganalysis --scheme watermark --images ./photos
     <!-- ============================= 29 · GRACIAS / REFS ============================= -->
     <section data-background-gradient="radial-gradient(900px 600px at 50% 0%, rgba(47,165,114,.20), transparent), #0b0f14">
       <div class="center">
+        <div class="brand-un hero"><img src="LogoUN.png" alt="Escudo de la Universidad Nacional de Colombia"></div>
         <span class="kicker">Gracias</span>
         <h1 style="font-size:1.7em">¿Preguntas?</h1>
         <p class="muted">Una <strong>guía de estudio de algoritmos</strong> acompaña esta presentación.</p>
@@ -696,7 +707,7 @@ python cli.py steganalysis --scheme watermark --images ./photos
           Nyquist 1928 / Shannon 1949 · Watson 1993 · Wang&nbsp;et&nbsp;al. 2004 (SSIM) ·
           Pevný&nbsp;et&nbsp;al. 2010 (SPAM) · Cachin 1998.
         </p>
-        <p class="small accent" style="margin-top:1.2em">ANS&#8209;STC · Teoría de la Información · UNAL 2026</p>
+        <p class="small accent" style="margin-top:1.2em;">RSW · Teoría de la Información · UNAL 2026</p>
       </div>
     </section>
 

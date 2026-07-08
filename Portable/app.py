@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Graphical front-end for the ANS-STC robust image watermark.
+"""Graphical front-end for the RSW robust image watermark.
 
 A modern two-tab customtkinter interface:
 
@@ -23,12 +23,12 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 from PIL import Image
 
-from ans_stc.robust_watermark import MAX_PAYLOAD_BYTES, MAX_TEXT_BYTES, WatermarkConfig
-from ans_stc.robust_watermark import embed_text as wm_embed_text
-from ans_stc.robust_watermark import embedded_size as wm_embedded_size
-from ans_stc.robust_watermark import extract as wm_extract
+from rsw.robust_watermark import MAX_PAYLOAD_BYTES, MAX_TEXT_BYTES, WatermarkConfig
+from rsw.robust_watermark import embed_text as wm_embed_text
+from rsw.robust_watermark import embedded_size as wm_embedded_size
+from rsw.robust_watermark import extract as wm_extract
 
-APP_TITLE = "ANS-STC · Marca Robusta"
+APP_TITLE = "RSW · Marca Robusta"
 ACCENT = "#2fa572"
 ACCENT_HOVER = "#268a5f"
 # Separate entries + a real "all files" (*) escape hatch: on macOS a single
@@ -115,7 +115,7 @@ class WatermarkApp(ctk.CTk):
         header = ctk.CTkFrame(self, corner_radius=0, fg_color=("#f1f5f9", "#0b1220"))
         header.pack(fill="x")
         ctk.CTkLabel(
-            header, text="ANS-STC", font=ctk.CTkFont(size=26, weight="bold"),
+            header, text="RSW", font=ctk.CTkFont(size=26, weight="bold"),
             text_color=ACCENT,
         ).pack(side="left", padx=(20, 8), pady=14)
         ctk.CTkLabel(

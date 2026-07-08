@@ -1,6 +1,6 @@
 """Resize-resistant blind watermark — survives social-media re-processing.
 
-Where the STC/J-UNIWARD pipeline (:mod:`ans_stc.pipeline`) hides *kilobytes* but
+Where the STC/J-UNIWARD pipeline (:mod:`rsw.pipeline`) hides *kilobytes* but
 dies when an image is **resized** (Facebook / Instagram / WhatsApp all downscale
 and recompress), this module trades capacity for brute robustness: it embeds a
 **variable-length payload of up to 512 bytes** that survives that whole gauntlet.

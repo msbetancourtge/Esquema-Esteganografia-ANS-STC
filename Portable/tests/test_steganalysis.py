@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from ans_stc import steganalysis as st
-from ans_stc.payload_manager import pack_text
-from ans_stc.robust_watermark import WatermarkConfig
+from rsw import steganalysis as st
+from rsw.payload_manager import pack_text
+from rsw.robust_watermark import WatermarkConfig
 
 
 def test_spam_feature_dimension():

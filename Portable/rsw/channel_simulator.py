@@ -11,7 +11,7 @@ JPEG recompression applied by social networks.  For each quality level it report
 
 Run directly::
 
-    python -m ans_stc.channel_simulator [cover_image.png]
+    python -m rsw.channel_simulator [cover_image.png]
 """
 
 from __future__ import annotations
@@ -84,7 +84,7 @@ def evaluate(
 ) -> list[ChannelResult]:
     """Embed ``container`` then measure survival across JPEG qualities."""
     config = config or StegoConfig()
-    workdir = tempfile.mkdtemp(prefix="ans_stc_chan_")
+    workdir = tempfile.mkdtemp(prefix="rsw_chan_")
     stego_path = os.path.join(workdir, "stego.png")
     result = hide(cover_path, container, stego_path, config)
 
@@ -171,7 +171,7 @@ def _synthetic_cover(size: int = 448, seed: int = 1) -> np.ndarray:
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    workdir = tempfile.mkdtemp(prefix="ans_stc_demo_")
+    workdir = tempfile.mkdtemp(prefix="rsw_demo_")
     if argv:
         cover_path = argv[0]
     else:
@@ -179,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
         Image.fromarray(_synthetic_cover(), "RGB").save(cover_path)
         print(f"[i] no cover given - generated a synthetic one at {cover_path}")
 
-    container = pack_text("ANS-STC channel test: la ciberseguridad protege la verdad. " * 4)
+    container = pack_text("RSW channel test: la ciberseguridad protege la verdad. " * 4)
 
     for name, config in (
         ("max_quality", StegoConfig.max_quality()),

@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from ans_stc.config import StegoConfig
-from ans_stc.payload_manager import PayloadError
-from ans_stc.pipeline import (
+from rsw.config import StegoConfig
+from rsw.payload_manager import PayloadError
+from rsw.pipeline import (
     CapacityError,
     capacity_bytes,
     extract,

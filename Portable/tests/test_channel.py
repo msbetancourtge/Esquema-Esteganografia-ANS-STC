@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from ans_stc.channel_simulator import awgn_channel, evaluate, jpeg_channel
-from ans_stc.config import StegoConfig
-from ans_stc.payload_manager import pack_text
+from rsw.channel_simulator import awgn_channel, evaluate, jpeg_channel
+from rsw.config import StegoConfig
+from rsw.payload_manager import pack_text
 
 
 def test_robust_preset_survives_social_media_jpeg(sample_cover) -> None:

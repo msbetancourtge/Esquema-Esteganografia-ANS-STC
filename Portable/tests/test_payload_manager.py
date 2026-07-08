@@ -7,8 +7,8 @@ import os
 import numpy as np
 import pytest
 
-from ans_stc import payload_manager as pm
-from ans_stc.config import PTYPE_FILE, PTYPE_TEXT
+from rsw import payload_manager as pm
+from rsw.config import PTYPE_FILE, PTYPE_TEXT
 
 
 @pytest.mark.parametrize(

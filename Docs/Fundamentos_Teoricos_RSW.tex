@@ -46,13 +46,14 @@
 \normalfont\fontsize{12}{16}\selectfont
 \vspace*{1.2cm}
 
-{\bfseries Esquema de Esteganografía y Marca de Agua Robusta\par}
-{\bfseries Basado en ANS y STC\par}
+{\bfseries Marca de Agua Robusta por Espectro\par}
+{\bfseries Ensanchado (RSW)\par}
 
 \vspace{3.2cm}
 {\bfseries Presentado por:\par}
 \vspace{0.5cm}
 Michael Stiven Betancourt Gelves\par
+Nicolás A. Castellanos Rico\par
 
 \vspace{1.4cm}
 {\bfseries Profesor:\par}
@@ -247,9 +248,10 @@ dañada. Su papel es evitar falsos positivos: una imagen sin marca (o demasiado 
 falla el CRC y el sistema responde honestamente ``no hay marca'' en lugar de devolver
 basura.
 
-\subsection{Codificación de mínima distorsión: la herencia ANS-STC}
+\subsection{Codificación de mínima distorsión: el punto de partida (ANS y STC)}
 
-El nombre del proyecto recuerda su punto de partida teórico. Una línea muy potente de la
+Aunque el sistema final no las use, conviene conocer las dos técnicas que dan origen al
+proyecto, pues de ellas heredamos el principio rector. Una línea muy potente de la
 esteganografía moderna combina un codificador entrópico como \textbf{ANS} (los codificadores
 que vimos arriba) con los \textbf{Códigos de Síndrome-Trellis (STC)} \cite{filler2011}: dado
 un mensaje $\vect{m}$, el STC busca el estego $\vect{y}$ que cumple
@@ -292,7 +294,8 @@ errores Reed\nobreakdash-Solomon, \texttt{brotli} para la compresión de texto y
 \texttt{customtkinter} para la interfaz gráfica. No se usó ningún modelo de aprendizaje
 automático de ``caja negra'': todo es matemática explícita y reproducible.
 
-Ante el problema planteado, el sistema implementado es una \textbf{marca de agua robusta}
+Ante el problema planteado, el sistema implementado ---que llamamos \textbf{RSW}
+(\emph{Robust Spread-spectrum Watermark})--- es una \textbf{marca de agua robusta}
 cuya tubería, de principio a fin, es
 \[
 \text{texto}\ \xrightarrow{\text{Brotli}}\ \text{comprimido}\

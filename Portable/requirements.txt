@@ -1,4 +1,4 @@
-# Runtime dependencies for the ANS-STC robust steganography system
+# Runtime dependencies for the RSW (Robust Spread-spectrum Watermark) system
 numpy>=2.0
 scipy>=1.11
 pillow>=10.0
@@ -7,6 +7,6 @@ brotli>=1.1
 customtkinter>=5.2
 
 # Build-only: install to produce the standalone executable, then run
-#   pyinstaller ANS-STC.spec
-# (artifacts appear in dist/; see ANS-STC.spec for per-OS details).
+#   pyinstaller RSW.spec
+# (artifacts appear in dist/; see RSW.spec for per-OS details).
 # pyinstaller>=6.0

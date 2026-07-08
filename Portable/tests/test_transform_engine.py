@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from ans_stc.config import StegoConfig
-from ans_stc.cost_calculator import _db8_filters, juniward_costs
-from ans_stc.transform_engine import ZIGZAG, DctCarrier, ImageCarrier, zigzag_positions
+from rsw.config import StegoConfig
+from rsw.cost_calculator import _db8_filters, juniward_costs
+from rsw.transform_engine import ZIGZAG, DctCarrier, ImageCarrier, zigzag_positions
 
 
 def test_zigzag_is_a_permutation() -> None:

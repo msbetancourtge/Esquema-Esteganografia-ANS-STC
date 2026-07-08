@@ -1,4 +1,4 @@
-"""Shared configuration for the ANS-STC steganography pipeline.
+"""Shared configuration for the RSW (Robust Spread-spectrum Watermark) system.
 
 All tunable parameters live here so the console core, the GUI and the channel
 simulator stay in sync.  The values are deliberately conservative: they favour a
@@ -19,7 +19,7 @@ RANS_MASK32: int = 0xFFFFFFFF  # 32-bit wrap mask
 # --------------------------------------------------------------------------- #
 # Payload container
 # --------------------------------------------------------------------------- #
-PAYLOAD_MAGIC: bytes = b"AS1"  # container magic (ANS-STC v1)
+PAYLOAD_MAGIC: bytes = b"AS1"  # container magic (payload container v1)
 PTYPE_TEXT: int = 0
 PTYPE_FILE: int = 1
 PTYPE_IMAGE: int = 2

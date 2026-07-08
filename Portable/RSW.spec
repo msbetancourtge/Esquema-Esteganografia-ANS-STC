@@ -1,17 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller build recipe for the ANS-STC robust steganography GUI.
+"""PyInstaller build recipe for the RSW robust watermark GUI.
 
 Build a standalone, dependency-free application (no Python install required on
 the target machine)::
 
     pip install pyinstaller
-    pyinstaller ANS-STC.spec
+    pyinstaller RSW.spec
 
 Artifacts land in ``dist/``:
 
-* **macOS**   -> ``dist/ANS-STC.app`` (double-click) and ``dist/ANS-STC/``
-* **Windows** -> ``dist/ANS-STC/ANS-STC.exe``
-* **Linux**   -> ``dist/ANS-STC/ANS-STC``
+* **macOS**   -> ``dist/RSW.app`` (double-click) and ``dist/RSW/``
+* **Windows** -> ``dist/RSW/RSW.exe``
+* **Linux**   -> ``dist/RSW/RSW``
 
 PyInstaller does not cross-compile: run this spec once on each target OS to get
 that platform's binary.  The ``.spec`` itself is portable and unchanged between
@@ -62,7 +62,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="ANS-STC",
+    name="RSW",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -82,17 +82,17 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="ANS-STC",
+    name="RSW",
 )
 
 # macOS application bundle (ignored on Windows/Linux).
 app = BUNDLE(
     coll,
-    name="ANS-STC.app",
+    name="RSW.app",
     icon=None,
-    bundle_identifier="edu.teoinfo.ansstc",
+    bundle_identifier="edu.teoinfo.rsw",
     info_plist={
-        "CFBundleDisplayName": "ANS-STC",
+        "CFBundleDisplayName": "RSW",
         "CFBundleShortVersionString": "1.0.0",
         "CFBundleVersion": "1.0.0",
         "NSHighResolutionCapable": True,

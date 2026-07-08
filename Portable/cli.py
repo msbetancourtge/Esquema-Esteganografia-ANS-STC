@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Console core for the ANS-STC steganography system (Hito 1).
+"""Console core for the RSW steganography system (Hito 1).
 
 Runs the complete cycle without any GUI::
 
@@ -32,23 +32,23 @@ import argparse
 import os
 import sys
 
-from ans_stc.config import StegoConfig
-from ans_stc.payload_manager import PTYPE_TEXT, PayloadError
-from ans_stc.pipeline import (
+from rsw.config import StegoConfig
+from rsw.payload_manager import PTYPE_TEXT, PayloadError
+from rsw.pipeline import (
     CapacityError,
     capacity_bytes,
     extract,
     hide_file,
     hide_text,
 )
-from ans_stc.robust_watermark import (
+from rsw.robust_watermark import (
     MAX_PAYLOAD_BYTES,
     WatermarkConfig,
     WatermarkError,
 )
-from ans_stc.robust_watermark import embed as wm_embed
-from ans_stc.robust_watermark import embed_text as wm_embed_text
-from ans_stc.robust_watermark import extract as wm_extract
+from rsw.robust_watermark import embed as wm_embed
+from rsw.robust_watermark import embed_text as wm_embed_text
+from rsw.robust_watermark import extract as wm_extract
 
 _PRESETS = {
     "max": StegoConfig.max_quality,
@@ -143,11 +143,11 @@ def _cmd_capacity(args: argparse.Namespace) -> int:
 
 
 def _cmd_channel(args: argparse.Namespace) -> int:
-    from ans_stc.channel_simulator import evaluate, print_report
-    from ans_stc.payload_manager import pack_text
+    from rsw.channel_simulator import evaluate, print_report
+    from rsw.payload_manager import pack_text
 
     config = _config_from_args(args)
-    container = pack_text(args.text or ("ANS-STC channel test. " * 6))
+    container = pack_text(args.text or ("RSW channel test. " * 6))
     rows = evaluate(args.cover, container, config)
     print_report(rows, title=f"Channel report (preset={args.preset})")
     return 0
@@ -195,8 +195,8 @@ def _cmd_verify(args: argparse.Namespace) -> int:
 
 
 def _cmd_steganalysis(args: argparse.Namespace) -> int:
-    from ans_stc import steganalysis as st
-    from ans_stc.payload_manager import pack_text
+    from rsw import steganalysis as st
+    from rsw.payload_manager import pack_text
 
     text = args.text or "authentic:mike-2026 provenance token"
     if args.scheme == "watermark":
@@ -228,8 +228,8 @@ def _cmd_steganalysis(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="ans-stc",
-        description="Robust ANS-STC steganography — console core (Hito 1)",
+        prog="rsw",
+        description="RSW · Robust Spread-spectrum Watermark - console core (Hito 1)",
     )
     parser.add_argument(
         "--preset", choices=list(_PRESETS), default="robust",

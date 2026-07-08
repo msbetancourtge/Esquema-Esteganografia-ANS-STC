@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 import pytest
 
-from ans_stc import stc_core as stc
+from rsw import stc_core as stc
 
 
 def _distortion(x: np.ndarray, y: np.ndarray, rho: np.ndarray) -> float:

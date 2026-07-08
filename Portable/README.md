@@ -1,27 +1,28 @@
-# ANS-STC · Robust Image Steganography
+# RSW · Robust Spread-spectrum Watermark
 
-Hide a secret payload (text, a file, or a small image) **inside an image** so that
-it is invisible to the eye and survives being re-compressed by social networks
-(JPEG). Built for an anti-deepfake / cybersecurity course project.
+Hide a short, verifiable message **inside an image** so that it is invisible to the
+eye and — crucially — survives the **downscaling + JPEG re-compression** that social
+networks apply. Built for an anti-deepfake / cybersecurity course project.
 
-The pipeline chains four ideas:
+The headline system is a resize-proof **robust watermark**:
 
 ```
-payload ──ANS──▶ compress ──Reed-Solomon──▶ protect ──STC / J-UNIWARD──▶ DCT coefficients ──▶ stego image
-        (entropy coding)      (error correction)     (minimal-distortion embedding)
+text ──Brotli──▶ compress ──Reed-Solomon──▶ protect ──ISS / canonical grid──▶ marked image
+      (entropy coding)      (error correction)      (spread-spectrum embedding)
 ```
 
-* **ANS** (Asymmetric Numeral Systems) compresses the payload.
+* **Brotli** compresses the text (entropy coding) so there are fewer bits to embed.
 * **Reed-Solomon** adds error-correction so the message survives channel noise.
-* **STC + J-UNIWARD** embed the bits into mid-frequency DCT coefficients while
-  changing the image as little (and as imperceptibly) as possible.
+* **ISS** (Improved Spread Spectrum) spreads each bit over many DCT coefficients on a
+  fixed **canonical grid**, so resizing no longer erases the mark.
 
-> **Two modes.** The pipeline above is **steganography** — it hides *kilobytes*
-> and survives JPEG *re-compression*, but not social-media *resizing*. For images
-> that will pass through **Facebook / WhatsApp / Pinterest**, use the second mode:
-> a resize-proof **robust watermark** that embeds text (Brotli-compressed, up to
-> **512 bytes compressed**) which
-> survives downscaling + recompression (see [§8](#8-robust-watermark-mode--survives-facebook--whatsapp--pinterest)).
+> **Two modes.** The **robust watermark** above is the final system: it embeds text
+> (Brotli-compressed, up to **512 bytes compressed**) and survives **Facebook /
+> WhatsApp / Pinterest** — resize *and* recompression (see [§8](#8-robust-watermark-mode--survives-facebook--whatsapp--pinterest)).
+> A second, **legacy high-capacity steganography** mode hides *kilobytes* (text,
+> files, images) and survives JPEG *re-compression* but **not** resizing. It is the
+> project's theoretical starting point — **ANS** (Asymmetric Numeral Systems) +
+> **STC / J-UNIWARD** minimal-distortion embedding — and lives in the CLI (§3–§4).
 
 ---
 
@@ -52,7 +53,7 @@ below assume the environment is active.
 | --- | --- | --- |
 | **GUI** (recommended) | `python app.py` | The **robust watermark** — Ocultar / Recuperar (see §8) |
 | **Command line** | `python cli.py …` | Everything: steganography (hide/extract) **and** watermark/verify/steganalysis |
-| **Standalone app** | `dist/ANS-STC.app` (macOS) · `dist/ANS-STC/ANS-STC` (Win/Linux) | Running with no Python installed (see §10) |
+| **Standalone app** | `dist/RSW.app` (macOS) · `dist/RSW/RSW` (Win/Linux) | Running with no Python installed (see §10) |
 
 > The desktop app is now focused on the **resize-proof watermark** (§8). The
 > high-capacity **steganography** mode (§3–§4) lives in the command line
@@ -218,7 +219,7 @@ it into `msg BER`, which Reed-Solomon then repairs — the last column is what
 matters. For a deeper sweep across presets:
 
 ```bash
-python -m ans_stc.channel_simulator assets/sample_cover.png
+python -m rsw.channel_simulator assets/sample_cover.png
 ```
 
 ---
@@ -369,14 +370,14 @@ itself stays focused on the watermark):
 
 ```bash
 pip install pyinstaller
-pyinstaller ANS-STC.spec
+pyinstaller RSW.spec
 ```
 
 Artifacts land in `dist/`:
 
-* **macOS** — `dist/ANS-STC.app` (double-click) and `dist/ANS-STC/`
-* **Windows** — `dist/ANS-STC/ANS-STC.exe`
-* **Linux** — `dist/ANS-STC/ANS-STC`
+* **macOS** — `dist/RSW.app` (double-click) and `dist/RSW/`
+* **Windows** — `dist/RSW/RSW.exe`
+* **Linux** — `dist/RSW/RSW`
 
 PyInstaller does not cross-compile: run the same spec on each target OS to get
 that platform's binary.
@@ -417,9 +418,9 @@ python -m pytest -q                             # run the test suite (94 tests)
 ```
 app.py                     Graphical app (customtkinter) — Ocultar / Recuperar
 cli.py                     Command line (hide / extract / capacity / channel / watermark / verify / steganalysis)
-ANS-STC.spec               PyInstaller build recipe
+RSW.spec                   PyInstaller build recipe
 requirements.txt
-ans_stc/
+rsw/
   payload_manager.py       ANS entropy coder + Reed-Solomon ECC
   transform_engine.py      8×8 block DCT + mid-frequency coefficient selection
   cost_calculator.py       J-UNIWARD distortion costs
