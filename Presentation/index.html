@@ -30,7 +30,7 @@
       color: var(--ink);
     }
     .reveal .slides { text-align: left; }
-    .reveal section { line-height: 1.4; }
+    .reveal section { line-height: 1.4; padding-bottom: 1.4em; box-sizing: border-box; }
 
     .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
       font-family: "Inter", "Helvetica Neue", sans-serif;
@@ -155,7 +155,7 @@
       <div class="brand-un corner"><img src="LogoUN.png" alt="Escudo de la Universidad Nacional de Colombia"></div>
       <div class="center">
         <span class="kicker">Teoría de la Información · UNAL 2026</span>
-        <h1>RSW</h1>
+        <h1>Proyecto Final del Curso</h1>
         <h2 style="color:var(--accent-bright); font-weight:600; margin-top:-.1em;">Marca de Agua Robusta Anti&#8209;Deepfake por Espectro Ensanchado</h2>
         <p class="lead muted" style="max-width:24em; margin:.4em auto 1.2em;">
           Ocultar un mensaje verificable dentro de una imagen para que permanezca <em>invisible</em> —
@@ -171,7 +171,6 @@
           <span class="tiny">Prof. Oswaldo Rojas Camacho — Universidad Nacional de Colombia</span>
         </p>
       </div>
-      <div class="footer">↓ / Espacio para avanzar · Esc para vista general</div>
     </section>
 
     <!-- ============================= 2 · MOTIVACIÓN ============================= -->
@@ -240,7 +239,7 @@
         <div class="card blue-b">
           <h3 class="blue">El sistema, en una frase</h3>
           <p class="small">Incrusta un <strong>texto corto y verificable</strong> (≤ <strong>512 B</strong>
-          comprimidos) que sobrevive el recorrido <em>completo</em> de Facebook, WhatsApp y Pinterest —
+          comprimidos) que sobrevive el recorrido <em>completo</em> de redes sociales —
           reescalado <em>y</em> recompresión — sin dejar de ser invisible.</p>
           <div class="flow" style="justify-content:flex-start; margin-top:.4em">
             <span class="node b">Brotli</span><span class="arrow" style="color:var(--accent-2)">→</span>
@@ -254,9 +253,9 @@
           <p class="small">El proyecto se llama <strong>RSW</strong> —<em>Robust Spread&#8209;spectrum
           Watermark</em>— porque eso es justo lo que construimos: una marca de agua robusta basada
           en <span class="accent">espectro ensanchado</span>.</p>
-          <p class="small">Su punto de partida teórico fue la esteganografía de mínima distorsión
+          <p class="small">El punto de partida teórico fue la esteganografía de mínima distorsión
           (<span class="accent">ANS</span> + <span class="accent">STC</span>): oculta <em>mucha</em>
-          información pero <strong>muere ante el reescalado</strong>. De ahí tomamos el principio
+          información pero <strong>falla ante el reescalado</strong>. De ahí tomamos el principio
           rector —<em>cambiar el portador lo menos posible</em>— y lo llevamos a un esquema que sí
           resiste el cambio de tamaño: el <strong>espectro ensanchado</strong>.</p>
         </div>
@@ -329,8 +328,8 @@
         </figure>
         <div>
           <div class="card" style="margin-bottom:.5em"><h3>Huffman (1952)</h3><p class="small">Código prefijo óptimo de <em>longitud entera</em>. Rápido, pero desperdicia hasta ~1 bit/símbolo.</p></div>
-          <div class="card accent-b" style="margin-bottom:.5em"><h3>Lempel&#8209;Ziv / LZ77 (1977)</h3><p class="small">Sustituye subcadenas repetidas por referencias <em>(distancia, longitud)</em> — captura la redundancia contextual. Es la base de <strong>Brotli</strong>, el compresor que usamos.</p></div>
-          <div class="card"><h3>ANS — Sistemas Numéricos Asimétricos (Duda 2014)</h3><p class="small">Velocidad de Huffman <strong>+</strong> compresión aritmética. Fue el punto de partida entrópico del proyecto (véase la siguiente lámina); en la práctica, <strong>Brotli</strong> cumple ese papel.</p></div>
+          <div class="card accent-b" style="margin-bottom:.5em"><h3>Lempel&#8209;Ziv / LZ77 (1977)</h3><p class="small">Sustituye subcadenas repetidas por referencias <em>(distancia, longitud, caracter)</em> — captura la redundancia contextual. Es la base de <strong>Brotli</strong>, el compresor que usamos.</p></div>
+          <div class="card"><h3>ANS — Sistemas Numéricos Asimétricos (Duda 2014)</h3><p class="small">Velocidad de Huffman <strong>+</strong> compresión aritmética. Fue el punto de partida entrópico del proyecto; en la práctica, <strong>Brotli</strong> cumple ese papel.</p></div>
         </div>
       </div>
     </section>
@@ -341,14 +340,13 @@
       <h2>La herencia: ANS + STC</h2>
       <div class="grid g7-5">
         <div>
-          <p>Una línea muy potente de la esteganografía combina un codificador entrópico como
-          <strong>ANS</strong> con los <strong>Códigos de Síndrome&#8209;Trellis (STC)</strong>: dado un
-          mensaje <strong>m</strong>, el STC busca el estego <strong>y</strong> que cumple
-          <em>H·y = m</em> <strong>cambiando lo menos posible</strong> el portador.</p>
-          <div class="eqbox small">\[ \mathbf{y}=\arg\!\!\min_{\mathbf{z}:\,\mathbf{H}\mathbf{z}=\mathbf{m}}\ \sum_i \rho_i\,[\,x_i\neq z_i\,] \]</div>
-          <p class="small">Ese costo se mide con funciones perceptuales tipo J&#8209;UNIWARD (wavelets) y se
-          resuelve con <em>Viterbi</em>. Es óptimo para ocultar <em>mucha</em> información…
-          <strong class="warn">pero muere cuando la imagen se reescala.</strong></p>
+          <p>Antes del espectro ensanchado, partimos de una familia muy potente de la esteganografía:
+          la de <strong>mínima distorsión</strong> (<strong>ANS + STC</strong>). Su idea es elegante —
+          esconder el mensaje <strong>alterando los mínimos píxeles posibles</strong>, justo donde
+          menos se nota a la vista.</p>
+          <p>Es lo mejor que hay para ocultar <em>mucha</em> información de forma invisible…
+          <strong class="warn">pero se rompe en cuanto la imagen se reescala</strong> — precisamente lo
+          que hacen todas las redes sociales. Por eso no nos sirve como marca de procedencia.</p>
         </div>
         <div class="card accent-b">
           <h3>Qué nos llevamos de aquí</h3>
@@ -399,8 +397,7 @@
         <div>
           <p>El <strong>barrido en zig&#8209;zag</strong> ordena los coeficientes de baja→alta frecuencia; es
           como JPEG recorre cada bloque. La lección que aprovechamos: la <strong>banda de media
-          frecuencia</strong> es el punto óptimo, y nuestra marca incrusta en una banda media
-          (de 8 a 400 ciclos) de la DCT global.</p>
+          frecuencia</strong> es el punto óptimo, y nuestra marca incrusta en una banda media de la DCT global.</p>
           <div class="card">
             <h3>Enmascaramiento por contraste (Watson 1993)</h3>
             <p class="small">El sistema visual humano tolera mucho más ruido en regiones <em>texturadas</em>
@@ -420,16 +417,18 @@
       <h2>Reed&#8209;Solomon repara las ráfagas</h2>
       <div class="grid g7-5">
         <div>
-          <p>Un código <strong>RS(n,k)</strong> sobre <em>GF(2<sup>8</sup>)</em> trata <em>k</em> bytes de
-          datos como un polinomio evaluado en <em>n = 255</em> puntos, añadiendo <em>n−k</em> bytes de
-          paridad. Corrige</p>
-          <div class="eqbox">\[ t=\left\lfloor \frac{n-k}{2} \right\rfloor \text{ bytes erróneos por bloque.} \]</div>
-          <p class="small">Perfecto para <em>ráfagas</em>: un byte cuenta como un símbolo sin importar
-          cuántos de sus bits fallen — justo el tipo de error que dejan el reescalado y la compresión.</p>
+          <p>Reed&#8209;Solomon añade <strong>bytes de paridad</strong> al mensaje: redundancia que
+          permite repararlo cuando el canal lo daña.</p>
+          <p class="small">La idea matemática: los <em>k</em> bytes de datos se tratan como un
+          <strong>polinomio</strong> evaluado en <em>n = 255</em> puntos. Si algunos llegan rotos, con
+          los que sobreviven se <strong>reconstruye</strong> el original. Así corrige hasta</p>
+          <div class="eqbox">\[ t=\left\lfloor \frac{n-k}{2} \right\rfloor \text{ bytes por bloque} \]</div>
+          <p class="small">Cada byte es <strong>un símbolo</strong>: da igual si falla 1 bit o los 8,
+          cuenta como un solo error. Ideal para las <em>ráfagas</em> del reescalado y la compresión.</p>
           <ul class="small">
-            <li>En nuestra marca: <strong>n−k = 32</strong> → corrige 16 bytes por bloque.</li>
+            <li>En nuestra marca: <strong>n−k = 32</strong> → repara 16 bytes por bloque.</li>
           </ul>
-          <p class="tiny muted">Un CRC&#8209;16/CCITT en la cabecera evita <em>falsos positivos</em>: una imagen sin marca falla el CRC y se reporta como “sin marca”, nunca como basura.</p>
+          <p class="tiny muted">Un CRC&#8209;16 en la cabecera evita <em>falsos positivos</em>: una imagen sin marca falla el CRC y se reporta como “sin marca”, nunca como basura.</p>
         </div>
         <figure>
           <div class="framed"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/QR_Code_Structure_Example_3.svg/960px-QR_Code_Structure_Example_3.svg.png" alt="Estructura de un código QR, que usa corrección de errores Reed-Solomon" style="max-height:38vh"></div>
